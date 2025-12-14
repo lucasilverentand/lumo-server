@@ -173,8 +173,9 @@ COPY --chown=1000:1000 config/plugins/Chunker/ /plugins/Chunker/
 COPY --chown=1000:1000 config/plugins/Essentials/ /plugins/Essentials/
 COPY --chown=1000:1000 config/plugins/PlotSquared/ /plugins/PlotSquared/
 
-# Copy setup documentation
+# Copy scripts and make them executable
 COPY --chown=1000:1000 scripts/ /scripts/
+RUN chmod +x /scripts/*.sh 2>/dev/null || true
 
 # Server configuration defaults (can be overridden at runtime)
 # Note: VERSION must be hardcoded here as Docker ARGs don't persist in ENV

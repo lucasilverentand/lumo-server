@@ -1,34 +1,52 @@
-# Lumo Server World Setup Commands
+# Lumo Server World Setup
 #
-# NOTE: These commands run AUTOMATICALLY on every server startup via RCON_CMDS_STARTUP
-# in docker-compose.yml. They are idempotent (won't recreate existing worlds).
+# Worlds are automatically created by the `world-init` service in docker-compose.yml.
+# This service:
+#   1. Waits for the minecraft server to be healthy
+#   2. Checks if each world directory exists
+#   3. Only creates worlds that don't exist (truly idempotent)
+#   4. Configures world settings after creation
 #
-# This file is kept as documentation for what the auto-setup does.
+# View init logs: docker logs lumo-world-init
+# Re-run init:    docker compose up world-init
 
 # ============================================
-# AUTOMATED SETUP (runs on startup)
+# WORLDS CREATED AUTOMATICALLY
 # ============================================
-# Commands are ordered: create all worlds first, then configure them.
-# This ensures one failed creation doesn't block others.
-# Each RCON command runs independently - failures don't stop subsequent commands.
+#
+# hub             - Void world for portal hub (adventure, peaceful)
+# lumo_wilds      - Main survival world with Terralith (survival, hard)
+# lumo_wilds_nether - Linked nether dimension
+# lumo_wilds_the_end - Linked end dimension
+# lumo_city       - PlotSquared city (survival, peaceful)
 
-# Step 1: Create all worlds
+# ============================================
+# MANUAL ALTERNATIVE
+# ============================================
+# If needed, you can also run: docker exec lumo-minecraft /scripts/init-worlds.sh
+# This script does the same thing as the world-init service.
+
+# ============================================
+# RAW COMMANDS (for reference)
+# ============================================
+
+# Create worlds
 mv create hub NORMAL -g VoidWorld
 mv create lumo_wilds NORMAL
 mv create lumo_wilds_nether NETHER
 mv create lumo_wilds_the_end THE_END
 mv create lumo_city NORMAL -g PlotSquared
 
-# Step 2: Configure hub (void portal hub)
+# Configure hub
 mvm set gamemode adventure hub
 mvm set difficulty peaceful hub
 mvm set pvp false hub
 
-# Step 3: Configure lumo_wilds (survival)
+# Configure lumo_wilds
 mvm set gamemode survival lumo_wilds
 mvm set difficulty hard lumo_wilds
 
-# Step 4: Configure lumo_city (plot world)
+# Configure lumo_city
 mvm set gamemode survival lumo_city
 mvm set difficulty peaceful lumo_city
 mvm set pvp false lumo_city
