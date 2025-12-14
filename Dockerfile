@@ -1,218 +1,170 @@
-# Lumo Minecraft Server
-# Pre-built image with all plugins and datapacks
-# Based on itzg/minecraft-server
+# Lumo Minecraft Server - Built from scratch
+# Minimal image with Paper server and plugins
 
-ARG BASE_IMAGE=itzg/minecraft-server:java21
 ARG MC_VERSION=1.21.4
+ARG JAVA_VERSION=21
 
 # =============================================================================
 # Stage 1: Build PlotSquared from source
 # =============================================================================
-FROM gradle:8.11-jdk21 AS plotsquared-builder
+FROM eclipse-temurin:21-jdk-alpine AS plotsquared-builder
+
+RUN apk add --no-cache git
 
 WORKDIR /build
-
-# Clone PlotSquared repository
 RUN git clone --depth 1 https://github.com/IntellectualSites/PlotSquared.git .
-
-# Build PlotSquared (Bukkit module for Paper/Spigot)
-RUN ./gradlew :plotsquared-bukkit:shadowJar --no-daemon -x test
-
-# Find and copy the built JAR (shadowJar output is in Bukkit/build/libs/)
-RUN mkdir -p /output && \
-    cp /build/Bukkit/build/libs/plotsquared-bukkit-*.jar /output/PlotSquared-Bukkit.jar && \
-    ls -la /output/
+RUN ./gradlew :plotsquared-bukkit:shadowJar --no-daemon -x test -q
+RUN cp Bukkit/build/libs/plotsquared-bukkit-*.jar /PlotSquared.jar
 
 # =============================================================================
-# Stage 2: Download plugins from Modrinth
+# Stage 2: Download everything
 # =============================================================================
 FROM alpine:3.20 AS downloader
 
-RUN apk add --no-cache curl jq
+RUN apk add --no-cache curl jq parallel
 
 WORKDIR /downloads
-
-# Create directories
 RUN mkdir -p plugins datapacks
-
-# Download script for Modrinth plugins
-# Usage: download_modrinth <project_slug> <mc_version> <loader>
-COPY <<'DOWNLOAD_SCRIPT' /usr/local/bin/download_modrinth
-#!/bin/sh
-set -e
-PROJECT=$1
-MC_VERSION=$2
-LOADER=$3
-
-echo "Downloading $PROJECT for MC $MC_VERSION ($LOADER)..."
-
-# Get the latest compatible version
-VERSION_DATA=$(curl -sS "https://api.modrinth.com/v2/project/$PROJECT/version?loaders=%5B%22$LOADER%22%5D&game_versions=%5B%22$MC_VERSION%22%5D" | jq -r '.[0]')
-
-if [ "$VERSION_DATA" = "null" ] || [ -z "$VERSION_DATA" ]; then
-    echo "Warning: No compatible version found for $PROJECT, trying without version filter..."
-    VERSION_DATA=$(curl -sS "https://api.modrinth.com/v2/project/$PROJECT/version?loaders=%5B%22$LOADER%22%5D" | jq -r '.[0]')
-fi
-
-if [ "$VERSION_DATA" = "null" ] || [ -z "$VERSION_DATA" ]; then
-    echo "Error: Could not find $PROJECT for $LOADER"
-    exit 1
-fi
-
-FILE_URL=$(echo "$VERSION_DATA" | jq -r '.files[0].url')
-FILE_NAME=$(echo "$VERSION_DATA" | jq -r '.files[0].filename')
-
-curl -sSL -o "/downloads/plugins/$FILE_NAME" "$FILE_URL"
-echo "Downloaded: $FILE_NAME"
-DOWNLOAD_SCRIPT
-
-# Download script for Modrinth datapacks
-COPY <<'DOWNLOAD_DATAPACK' /usr/local/bin/download_datapack
-#!/bin/sh
-set -e
-PROJECT=$1
-MC_VERSION=$2
-
-echo "Downloading datapack $PROJECT for MC $MC_VERSION..."
-
-VERSION_DATA=$(curl -sS "https://api.modrinth.com/v2/project/$PROJECT/version?loaders=%5B%22datapack%22%5D&game_versions=%5B%22$MC_VERSION%22%5D" | jq -r '.[0]')
-
-if [ "$VERSION_DATA" = "null" ] || [ -z "$VERSION_DATA" ]; then
-    echo "Warning: No compatible version found for $PROJECT, trying without version filter..."
-    VERSION_DATA=$(curl -sS "https://api.modrinth.com/v2/project/$PROJECT/version?loaders=%5B%22datapack%22%5D" | jq -r '.[0]')
-fi
-
-if [ "$VERSION_DATA" = "null" ] || [ -z "$VERSION_DATA" ]; then
-    echo "Error: Could not find datapack $PROJECT"
-    exit 1
-fi
-
-FILE_URL=$(echo "$VERSION_DATA" | jq -r '.files[0].url')
-FILE_NAME=$(echo "$VERSION_DATA" | jq -r '.files[0].filename')
-
-curl -sSL -o "/downloads/datapacks/$FILE_NAME" "$FILE_URL"
-echo "Downloaded datapack: $FILE_NAME"
-DOWNLOAD_DATAPACK
-
-RUN chmod +x /usr/local/bin/download_modrinth /usr/local/bin/download_datapack
 
 ARG MC_VERSION
 
-# Download all Modrinth plugins (Paper/Bukkit loader)
-RUN download_modrinth multiverse-core ${MC_VERSION} paper || download_modrinth multiverse-core ${MC_VERSION} bukkit
-RUN download_modrinth multiverse-portals ${MC_VERSION} paper || download_modrinth multiverse-portals ${MC_VERSION} bukkit
-RUN download_modrinth multiverse-netherportals ${MC_VERSION} paper || download_modrinth multiverse-netherportals ${MC_VERSION} bukkit
-RUN download_modrinth multiverse-signportals ${MC_VERSION} paper || download_modrinth multiverse-signportals ${MC_VERSION} bukkit
-RUN download_modrinth multiverse-inventories ${MC_VERSION} paper || download_modrinth multiverse-inventories ${MC_VERSION} bukkit
-RUN download_modrinth bluemap ${MC_VERSION} paper || download_modrinth bluemap ${MC_VERSION} bukkit
-RUN download_modrinth worldedit ${MC_VERSION} paper || download_modrinth worldedit ${MC_VERSION} bukkit
-RUN download_modrinth worldguard ${MC_VERSION} paper || download_modrinth worldguard ${MC_VERSION} bukkit
-RUN download_modrinth simple-voice-chat ${MC_VERSION} paper || download_modrinth simple-voice-chat ${MC_VERSION} bukkit
-RUN download_modrinth chunker ${MC_VERSION} paper || download_modrinth chunker ${MC_VERSION} bukkit
-RUN download_modrinth lagfixer ${MC_VERSION} paper || download_modrinth lagfixer ${MC_VERSION} bukkit
-RUN download_modrinth coreprotect ${MC_VERSION} paper || download_modrinth coreprotect ${MC_VERSION} bukkit
-RUN download_modrinth viaversion ${MC_VERSION} paper || download_modrinth viaversion ${MC_VERSION} bukkit
-RUN download_modrinth viabackwards ${MC_VERSION} paper || download_modrinth viabackwards ${MC_VERSION} bukkit
-RUN download_modrinth voidworld ${MC_VERSION} paper || download_modrinth voidworld ${MC_VERSION} bukkit
-RUN download_modrinth simpledeathchest ${MC_VERSION} paper || download_modrinth simpledeathchest ${MC_VERSION} bukkit
+# Download Paper server
+RUN echo "Downloading Paper server..." && \
+    PAPER_BUILD=$(curl -s "https://api.papermc.io/v2/projects/paper/versions/${MC_VERSION}/builds" | jq -r '.builds[-1].build') && \
+    curl -sSL -o /downloads/paper.jar \
+    "https://api.papermc.io/v2/projects/paper/versions/${MC_VERSION}/builds/${PAPER_BUILD}/downloads/paper-${MC_VERSION}-${PAPER_BUILD}.jar"
 
-# Permissions & Economy
-RUN download_modrinth luckperms ${MC_VERSION} paper || download_modrinth luckperms ${MC_VERSION} bukkit
-RUN download_modrinth essentialsx ${MC_VERSION} paper || download_modrinth essentialsx ${MC_VERSION} bukkit
+# Download script for Modrinth
+COPY <<'EOF' /usr/local/bin/download_modrinth
+#!/bin/sh
+set -e
+PROJECT=$1; MC_VERSION=$2; LOADER=${3:-paper}
+echo "Downloading $PROJECT..."
+VERSION_DATA=$(curl -sS "https://api.modrinth.com/v2/project/$PROJECT/version?loaders=%5B%22$LOADER%22%5D&game_versions=%5B%22$MC_VERSION%22%5D" | jq -r '.[0]')
+[ "$VERSION_DATA" = "null" ] && VERSION_DATA=$(curl -sS "https://api.modrinth.com/v2/project/$PROJECT/version?loaders=%5B%22$LOADER%22%5D" | jq -r '.[0]')
+FILE_URL=$(echo "$VERSION_DATA" | jq -r '.files[0].url')
+FILE_NAME=$(echo "$VERSION_DATA" | jq -r '.files[0].filename')
+curl -sSL -o "/downloads/plugins/$FILE_NAME" "$FILE_URL"
+echo "✓ $PROJECT"
+EOF
+RUN chmod +x /usr/local/bin/download_modrinth
 
-# Download Vault from Spiget (resource 34315)
-RUN echo "Downloading Vault from Spiget..." && \
-    curl -sSL -o /downloads/plugins/Vault.jar \
-    "https://api.spiget.org/v2/resources/34315/download"
+# Download all Modrinth plugins in parallel
+RUN cat <<'PLUGINS' | parallel -j8 --colsep ' ' download_modrinth {1} ${MC_VERSION} {2}
+multiverse-core paper
+multiverse-portals paper
+multiverse-netherportals paper
+multiverse-signportals paper
+multiverse-inventories paper
+bluemap paper
+worldedit paper
+worldguard paper
+simple-voice-chat paper
+chunker paper
+lagfixer paper
+coreprotect paper
+viaversion paper
+viabackwards paper
+voidworld paper
+simpledeathchest paper
+luckperms paper
+essentialsx paper
+PLUGINS
 
-# Download SmoothTimber from Spiget (resource 39965)
-RUN echo "Downloading SmoothTimber from Spiget..." && \
-    curl -sSL -o /downloads/plugins/SmoothTimber.jar \
-    "https://api.spiget.org/v2/resources/39965/download"
+# Download from other sources
+RUN curl -sSL -o /downloads/plugins/Vault.jar \
+    "https://api.spiget.org/v2/resources/34315/download" && echo "✓ Vault"
 
-# Download Citizens from Jenkins CI (NPC framework)
-RUN echo "Downloading Citizens from Jenkins CI..." && \
-    curl -sSL -o /downloads/plugins/Citizens.jar \
-    "https://ci.citizensnpcs.co/job/Citizens2/lastSuccessfulBuild/artifact/dist/target/Citizens-2.0.41-b4021.jar"
+RUN curl -sSL -o /downloads/plugins/SmoothTimber.jar \
+    "https://api.spiget.org/v2/resources/39965/download" && echo "✓ SmoothTimber"
 
-# Download Shopkeepers from GitHub (NPC shop functionality)
-RUN echo "Downloading Shopkeepers from GitHub..." && \
-    curl -sSL -o /downloads/plugins/Shopkeepers.jar \
-    "https://raw.githubusercontent.com/Shopkeepers/Repository/main/releases/com/nisovin/shopkeepers/Shopkeepers/2.24.0/Shopkeepers-2.24.0.jar"
+# Citizens - disabled due to NMS compatibility issues with Paper 1.21.4
+# Shopkeepers works with vanilla villagers as an alternative
+# TODO: Re-enable when Citizens has a compatible build
+# RUN curl -sSL -o /downloads/plugins/Citizens.jar \
+#     "https://ci.citizensnpcs.co/job/Citizens2/3800/artifact/dist/target/Citizens-2.0.38-b3800.jar" && echo "✓ Citizens"
+
+RUN curl -sSL -o /downloads/plugins/Shopkeepers.jar \
+    "https://raw.githubusercontent.com/Shopkeepers/Repository/main/releases/com/nisovin/shopkeepers/Shopkeepers/2.24.0/Shopkeepers-2.24.0.jar" && echo "✓ Shopkeepers"
+
+# PlotSquared is built from source in plotsquared-builder stage
+COPY --from=plotsquared-builder /PlotSquared.jar /downloads/plugins/PlotSquared.jar
+RUN echo "✓ PlotSquared (built from source)"
 
 # Download Terralith datapack
-RUN download_datapack terralith ${MC_VERSION}
+RUN VERSION_DATA=$(curl -sS "https://api.modrinth.com/v2/project/terralith/version?loaders=%5B%22datapack%22%5D&game_versions=%5B%22${MC_VERSION}%22%5D" | jq -r '.[0]') && \
+    FILE_URL=$(echo "$VERSION_DATA" | jq -r '.files[0].url') && \
+    FILE_NAME=$(echo "$VERSION_DATA" | jq -r '.files[0].filename') && \
+    curl -sSL -o "/downloads/datapacks/$FILE_NAME" "$FILE_URL" && echo "✓ Terralith"
 
-# List all downloaded files
-RUN echo "=== Downloaded Plugins ===" && ls -la /downloads/plugins/ && \
-    echo "=== Downloaded Datapacks ===" && ls -la /downloads/datapacks/
+RUN echo "=== Downloaded ===" && ls -la /downloads/plugins/ && ls -la /downloads/datapacks/
 
 # =============================================================================
-# Stage 2: Final image
+# Stage 2: Final minimal image
 # =============================================================================
-FROM ${BASE_IMAGE}
-
-# Re-declare ARG to use in this stage
-ARG MC_VERSION=1.21.4
+FROM eclipse-temurin:${JAVA_VERSION}-jre-alpine
 
 LABEL maintainer="Luca Silverentand"
-LABEL description="Lumo Minecraft Server with pre-installed plugins"
+LABEL description="Lumo Minecraft Server"
 
-# Copy plugins from downloader stage
-COPY --chown=1000:1000 --from=downloader /downloads/plugins/ /plugins/
+# Create minecraft user
+RUN addgroup -g 1000 minecraft && \
+    adduser -u 1000 -G minecraft -h /data -D minecraft
 
-# Copy PlotSquared from builder stage
-COPY --chown=1000:1000 --from=plotsquared-builder /output/PlotSquared-Bukkit.jar /plugins/
+# Install minimal runtime dependencies
+RUN apk add --no-cache bash tini netcat-openbsd
 
-# Copy datapacks from downloader stage
-COPY --chown=1000:1000 --from=downloader /downloads/datapacks/ /datapacks/
+WORKDIR /server
+
+# Copy server and plugins
+COPY --from=downloader /downloads/paper.jar /server/paper.jar
+COPY --from=downloader /downloads/plugins/ /server/plugins/
+COPY --from=downloader /downloads/datapacks/ /server/datapacks/
 
 # Copy plugin configurations
-COPY --chown=1000:1000 config/plugins/BlueMap/ /plugins/BlueMap/
-COPY --chown=1000:1000 config/plugins/Chunker/ /plugins/Chunker/
-COPY --chown=1000:1000 config/plugins/Essentials/ /plugins/Essentials/
-COPY --chown=1000:1000 config/plugins/PlotSquared/ /plugins/PlotSquared/
+COPY --chown=minecraft:minecraft config/plugins/BlueMap/ /server/plugins/BlueMap/
+COPY --chown=minecraft:minecraft config/plugins/Chunker/ /server/plugins/Chunker/
+COPY --chown=minecraft:minecraft config/plugins/Essentials/ /server/plugins/Essentials/
+COPY --chown=minecraft:minecraft config/plugins/PlotSquared/ /server/plugins/PlotSquared/
 
-# Copy scripts and make them executable
-COPY --chown=1000:1000 scripts/ /scripts/
-RUN chmod +x /scripts/*.sh 2>/dev/null || true
+# Copy entrypoint
+COPY --chmod=755 docker/server/entrypoint.sh /entrypoint.sh
 
-# Server configuration defaults (can be overridden at runtime)
-# Note: VERSION must be hardcoded here as Docker ARGs don't persist in ENV
-ENV EULA=TRUE \
-    TYPE=PAPER \
-    VERSION=1.21.4 \
-    MEMORY=4G \
+# Set ownership
+RUN chown -R minecraft:minecraft /server
+
+# Environment defaults
+ENV MEMORY=4G \
+    EULA=false \
     MAX_PLAYERS=20 \
     MOTD="Welcome to the Lumo Universe!" \
     DIFFICULTY=normal \
-    MODE=survival \
+    GAMEMODE=survival \
+    HARDCORE=false \
     PVP=true \
     ONLINE_MODE=true \
     VIEW_DISTANCE=12 \
+    SIMULATION_DISTANCE=10 \
     SPAWN_PROTECTION=0 \
     ENABLE_COMMAND_BLOCK=true \
-    USE_AIKAR_FLAGS=true \
-    MAX_TICK_TIME=-1 \
-    WHITELIST_ENABLED=true \
-    ENFORCE_WHITELIST=true \
-    # Disable automatic plugin downloads since we pre-baked them
-    MODRINTH_PROJECTS="" \
-    SPIGET_RESOURCES="" \
-    # Tell the container to use our pre-downloaded content
-    COPY_PLUGINS_SRC=/plugins \
-    COPY_DATAPACKS_SRC=/datapacks \
-    # Enable autopause for resource efficiency
-    ENABLE_AUTOPAUSE=true \
-    AUTOPAUSE_TIMEOUT_EST=600 \
-    AUTOPAUSE_TIMEOUT_INIT=300 \
-    AUTOPAUSE_TIMEOUT_KN=300
+    WHITELIST=false \
+    ENFORCE_WHITELIST=false \
+    ENABLE_RCON=true \
+    RCON_PASSWORD=minecraft \
+    RCON_PORT=25575
 
-# Expose ports
+# Ports
 EXPOSE 25565/tcp
+EXPOSE 25575/tcp
 EXPOSE 8100/tcp
 EXPOSE 24454/udp
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=5s --start-period=300s --retries=5 \
-    CMD mc-health || exit 1
+# Health check - verify server port is accepting connections
+HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
+    CMD nc -z localhost 25565 || exit 1
+
+USER minecraft
+VOLUME /data
+WORKDIR /data
+
+ENTRYPOINT ["/sbin/tini", "--", "/entrypoint.sh"]
