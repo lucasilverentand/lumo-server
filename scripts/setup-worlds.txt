@@ -1,70 +1,50 @@
 # Lumo Server World Setup Commands
-# Run these commands in-game or via RCON after first server start
-# These commands only need to be run ONCE on initial setup
+#
+# NOTE: These commands run AUTOMATICALLY on every server startup via RCON_CMDS_STARTUP
+# in docker-compose.yml. They are idempotent (won't recreate existing worlds).
+#
+# This file is kept as documentation for what the auto-setup does.
 
 # ============================================
-# STEP 1: Create Hub World (Void)
+# AUTOMATED SETUP (runs on startup)
 # ============================================
-# Creates a void world using VoidWorld generator
+
+# Hub World (Void) - Portal hub
 mv create hub NORMAL -g VoidWorld
-mv modify set gamemode adventure hub
-mv modify set difficulty peaceful hub
-mv modify set pvp false hub
-mv modify set animals false hub
-mv modify set monsters false hub
+mvm set gamemode adventure hub
+mvm set difficulty peaceful hub
+mvm set pvp false hub
 
-# ============================================
-# STEP 2: Create Lumo Wilds (Survival)
-# ============================================
-# Creates the main survival world with normal generation
-# Terralith datapack will apply automatically
+# Lumo Wilds (Survival) - Main survival world with Terralith
 mv create lumo_wilds NORMAL
-mv modify set gamemode survival lumo_wilds
-mv modify set difficulty hard lumo_wilds
-mv modify set pvp false lumo_wilds
+mvm set gamemode survival lumo_wilds
+mvm set difficulty hard lumo_wilds
 
-# Create linked nether and end
+# Linked nether and end for lumo_wilds
 mv create lumo_wilds_nether NETHER
-mv create lumo_wilds_the_end END
+mv create lumo_wilds_the_end THE_END
 
-# ============================================
-# STEP 3: Create Lumo City (PlotSquared)
-# ============================================
-# Creates the plot world using PlotSquared generator
+# Lumo City (PlotSquared) - Plot-based city
 mv create lumo_city NORMAL -g PlotSquared
-mv modify set gamemode survival lumo_city
-mv modify set difficulty peaceful lumo_city
-mv modify set pvp false lumo_city
+mvm set gamemode survival lumo_city
+mvm set difficulty peaceful lumo_city
+mvm set pvp false lumo_city
 
-# ============================================
-# STEP 4: Set Spawn Points
-# ============================================
-# Set global spawn to hub
+# Set spawn to hub
 mv setspawn hub
 
-# Set first spawn for new players
-# (Run this while standing at desired spawn location)
+# ============================================
+# MANUAL SETUP (one-time after first boot)
+# ============================================
+
+# Set world spawn point in hub (stand at desired location):
 # /setworldspawn
 
-# ============================================
-# STEP 5: Configure Essentials Spawn
-# ============================================
-# Set Essentials spawn (run while in hub at spawn location)
+# Set Essentials spawn (stand at desired location):
 # /setspawn
 
-# ============================================
-# STEP 6: Reload Configurations
-# ============================================
-mv reload
-bluemap reload
-
-# ============================================
-# STEP 7: Start Chunk Pre-generation (Optional)
-# ============================================
-# Pre-generate chunks around spawn in lumo_wilds
-# Run in lumo_wilds world:
-# /chunker world lumo_wilds
-# /pregen start
+# Reload BlueMap to pick up new worlds:
+# /bluemap reload
 
 # ============================================
 # PORTAL SETUP (Manual)
