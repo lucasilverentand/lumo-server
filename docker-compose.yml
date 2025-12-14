@@ -63,9 +63,31 @@ services:
     networks:
       - minecraft-net
 
+  file-manager:
+    image: filebrowser/filebrowser:latest
+    container_name: lumo-file-manager
+    ports:
+      - "8080:80"
+    environment:
+      PUID: 1000
+      PGID: 1000
+    volumes:
+      - minecraft-data:/srv/minecraft
+      - filebrowser-data:/database
+    command:
+      - --noauth
+      - --root=/srv/minecraft
+      - --database=/database/filebrowser.db
+    depends_on:
+      - minecraft
+    restart: unless-stopped
+    networks:
+      - minecraft-net
+
 networks:
   minecraft-net:
     driver: bridge
 
 volumes:
   minecraft-data:
+  filebrowser-data:
