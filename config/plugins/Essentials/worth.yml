@@ -1,13 +1,12 @@
 # Essentials Worth Configuration for Lumo Server
 # These values determine what players get when using /sell hand
 #
-# Pricing Philosophy:
-# - Common farmable items: Low value (1-10)
-# - Uncommon but obtainable: Medium value (10-100)
-# - Rare/hard to obtain: High value (100-1000)
-# - Very rare: Premium value (1000+)
+# PRICING TIER: LOW (70% of full value)
+# This is the "convenience" option - quick sell anywhere, but lower prices.
+# For better prices, visit NPC merchants or trade with players.
 #
-# Plot price is 15,000 so players need to gather/sell to afford plots
+# Full value prices are available at NPC merchants (Shopkeepers).
+# Player shops (QuickShop) have market-driven prices.
 
 worth:
 
@@ -16,34 +15,34 @@ worth:
   # ============================================
 
   # Raw ores
-  raw_iron: 15
-  raw_gold: 25
-  raw_copper: 8
-  coal: 5
-  redstone: 8
-  lapis_lazuli: 12
+  raw_iron: 10
+  raw_gold: 17
+  raw_copper: 5
+  coal: 3
+  redstone: 5
+  lapis_lazuli: 8
 
   # Processed minerals
-  iron_ingot: 20
-  gold_ingot: 35
-  copper_ingot: 12
-  diamond: 500
-  emerald: 300
-  netherite_ingot: 5000
-  netherite_scrap: 1500
-  ancient_debris: 1200
-  amethyst_shard: 15
+  iron_ingot: 14
+  gold_ingot: 24
+  copper_ingot: 8
+  diamond: 350
+  emerald: 210
+  netherite_ingot: 3500
+  netherite_scrap: 1050
+  ancient_debris: 840
+  amethyst_shard: 10
 
   # Blocks
-  iron_block: 180
-  gold_block: 315
-  diamond_block: 4500
-  emerald_block: 2700
-  netherite_block: 45000
-  coal_block: 45
-  copper_block: 108
-  lapis_block: 108
-  redstone_block: 72
+  iron_block: 126
+  gold_block: 220
+  diamond_block: 3150
+  emerald_block: 1890
+  netherite_block: 31500
+  coal_block: 31
+  copper_block: 75
+  lapis_block: 75
+  redstone_block: 50
 
   # ============================================
   # MOB DROPS (Secondary income)
@@ -51,160 +50,160 @@ worth:
 
   # Common mob drops
   rotten_flesh: 1
-  bone: 3
-  string: 3
-  spider_eye: 5
-  gunpowder: 8
-  slime_ball: 10
-  ender_pearl: 50
-  blaze_rod: 75
-  ghast_tear: 150
+  bone: 2
+  string: 2
+  spider_eye: 3
+  gunpowder: 5
+  slime_ball: 7
+  ender_pearl: 35
+  blaze_rod: 52
+  ghast_tear: 105
 
   # Rare mob drops
-  wither_skeleton_skull: 2500
-  nether_star: 15000
-  dragon_egg: 50000
-  dragon_breath: 200
-  shulker_shell: 500
-  phantom_membrane: 25
+  wither_skeleton_skull: 1750
+  nether_star: 10500
+  dragon_egg: 35000
+  dragon_breath: 140
+  shulker_shell: 350
+  phantom_membrane: 17
 
   # Animal drops
-  leather: 10
-  rabbit_hide: 5
-  feather: 2
-  wool: 3
-  ink_sac: 8
-  glow_ink_sac: 25
+  leather: 7
+  rabbit_hide: 3
+  feather: 1
+  wool: 2
+  ink_sac: 5
+  glow_ink_sac: 17
 
   # ============================================
   # FOOD (Low value - farmable)
   # ============================================
 
-  wheat: 2
-  carrot: 2
-  potato: 2
-  beetroot: 2
+  wheat: 1
+  carrot: 1
+  potato: 1
+  beetroot: 1
   melon_slice: 1
-  pumpkin: 3
-  apple: 3
+  pumpkin: 2
+  apple: 2
   sweet_berries: 1
-  glow_berries: 5
+  glow_berries: 3
 
   # Cooked food
-  bread: 5
-  cooked_beef: 8
-  cooked_porkchop: 8
-  cooked_mutton: 7
-  cooked_chicken: 6
-  cooked_rabbit: 7
-  cooked_cod: 5
-  cooked_salmon: 6
-  baked_potato: 4
-  pumpkin_pie: 10
-  golden_carrot: 50
-  golden_apple: 500
-  enchanted_golden_apple: 10000
+  bread: 3
+  cooked_beef: 5
+  cooked_porkchop: 5
+  cooked_mutton: 4
+  cooked_chicken: 4
+  cooked_rabbit: 4
+  cooked_cod: 3
+  cooked_salmon: 4
+  baked_potato: 2
+  pumpkin_pie: 7
+  golden_carrot: 35
+  golden_apple: 350
+  enchanted_golden_apple: 7000
 
   # Raw meat (worth less than cooked)
-  beef: 4
-  porkchop: 4
-  mutton: 3
-  chicken: 3
-  rabbit: 3
-  cod: 3
-  salmon: 4
-  tropical_fish: 15
-  pufferfish: 10
+  beef: 2
+  porkchop: 2
+  mutton: 2
+  chicken: 2
+  rabbit: 2
+  cod: 2
+  salmon: 2
+  tropical_fish: 10
+  pufferfish: 7
 
   # ============================================
   # NETHER ITEMS
   # ============================================
 
-  quartz: 10
-  glowstone_dust: 8
-  magma_cream: 15
-  nether_wart: 5
-  soul_sand: 3
-  soul_soil: 3
-  crying_obsidian: 50
-  blackstone: 2
-  basalt: 2
+  quartz: 7
+  glowstone_dust: 5
+  magma_cream: 10
+  nether_wart: 3
+  soul_sand: 2
+  soul_soil: 2
+  crying_obsidian: 35
+  blackstone: 1
+  basalt: 1
 
   # ============================================
   # END ITEMS
   # ============================================
 
-  chorus_fruit: 10
-  popped_chorus_fruit: 15
-  end_stone: 3
-  purpur_block: 5
-  elytra: 25000
+  chorus_fruit: 7
+  popped_chorus_fruit: 10
+  end_stone: 2
+  purpur_block: 3
+  elytra: 17500
 
   # ============================================
   # BUILDING MATERIALS (Low value)
   # ============================================
 
   cobblestone: 1
-  stone: 2
-  deepslate: 2
+  stone: 1
+  deepslate: 1
   cobbled_deepslate: 1
   granite: 1
   diorite: 1
   andesite: 1
   tuff: 1
-  calcite: 2
-  dripstone_block: 3
+  calcite: 1
+  dripstone_block: 2
 
   # Wood (very low - fully renewable)
-  oak_log: 2
-  spruce_log: 2
-  birch_log: 2
-  jungle_log: 2
-  acacia_log: 2
-  dark_oak_log: 2
-  mangrove_log: 2
-  cherry_log: 3
-  crimson_stem: 5
-  warped_stem: 5
+  oak_log: 1
+  spruce_log: 1
+  birch_log: 1
+  jungle_log: 1
+  acacia_log: 1
+  dark_oak_log: 1
+  mangrove_log: 1
+  cherry_log: 2
+  crimson_stem: 3
+  warped_stem: 3
 
   # Sand and glass
-  sand: 2
-  red_sand: 3
-  glass: 3
-  clay_ball: 5
-  clay: 20
-  brick: 8
+  sand: 1
+  red_sand: 2
+  glass: 2
+  clay_ball: 3
+  clay: 14
+  brick: 5
 
   # ============================================
   # RARE/SPECIAL ITEMS
   # ============================================
 
-  sponge: 200
-  sea_lantern: 50
-  prismarine_shard: 15
-  prismarine_crystals: 20
-  nautilus_shell: 150
-  heart_of_the_sea: 5000
-  trident: 8000
-  totem_of_undying: 3000
+  sponge: 140
+  sea_lantern: 35
+  prismarine_shard: 10
+  prismarine_crystals: 14
+  nautilus_shell: 105
+  heart_of_the_sea: 3500
+  trident: 5600
+  totem_of_undying: 2100
 
   # Music discs
-  music_disc_13: 500
-  music_disc_cat: 500
-  music_disc_blocks: 500
-  music_disc_chirp: 500
-  music_disc_far: 500
-  music_disc_mall: 500
-  music_disc_mellohi: 500
-  music_disc_stal: 500
-  music_disc_strad: 500
-  music_disc_ward: 500
-  music_disc_11: 1000
-  music_disc_wait: 500
-  music_disc_otherside: 2000
-  music_disc_pigstep: 3000
-  music_disc_5: 2500
-  music_disc_relic: 2500
+  music_disc_13: 350
+  music_disc_cat: 350
+  music_disc_blocks: 350
+  music_disc_chirp: 350
+  music_disc_far: 350
+  music_disc_mall: 350
+  music_disc_mellohi: 350
+  music_disc_stal: 350
+  music_disc_strad: 350
+  music_disc_ward: 350
+  music_disc_11: 700
+  music_disc_wait: 350
+  music_disc_otherside: 1400
+  music_disc_pigstep: 2100
+  music_disc_5: 1750
+  music_disc_relic: 1750
 
   # ============================================
   # FLOWERS & DYES (Low value)
@@ -212,8 +211,8 @@ worth:
 
   dandelion: 1
   poppy: 1
-  blue_orchid: 2
-  allium: 2
+  blue_orchid: 1
+  allium: 1
   azure_bluet: 1
   red_tulip: 1
   orange_tulip: 1
@@ -221,83 +220,78 @@ worth:
   pink_tulip: 1
   oxeye_daisy: 1
   cornflower: 1
-  lily_of_the_valley: 2
-  wither_rose: 100
-  sunflower: 2
-  lilac: 2
-  rose_bush: 2
-  peony: 2
+  lily_of_the_valley: 1
+  wither_rose: 70
+  sunflower: 1
+  lilac: 1
+  rose_bush: 1
+  peony: 1
 
   # Dyes
-  white_dye: 2
-  orange_dye: 2
-  magenta_dye: 2
-  light_blue_dye: 2
-  yellow_dye: 2
-  lime_dye: 2
-  pink_dye: 2
-  gray_dye: 2
-  light_gray_dye: 2
-  cyan_dye: 2
-  purple_dye: 2
-  blue_dye: 2
-  brown_dye: 2
-  green_dye: 2
-  red_dye: 2
-  black_dye: 2
+  white_dye: 1
+  orange_dye: 1
+  magenta_dye: 1
+  light_blue_dye: 1
+  yellow_dye: 1
+  lime_dye: 1
+  pink_dye: 1
+  gray_dye: 1
+  light_gray_dye: 1
+  cyan_dye: 1
+  purple_dye: 1
+  blue_dye: 1
+  brown_dye: 1
+  green_dye: 1
+  red_dye: 1
+  black_dye: 1
 
   # ============================================
   # EQUIPMENT (Sell back value)
   # ============================================
 
   # Diamond tools (high sell value)
-  diamond_sword: 150
-  diamond_pickaxe: 225
-  diamond_axe: 225
-  diamond_shovel: 75
-  diamond_hoe: 150
-  diamond_helmet: 375
-  diamond_chestplate: 600
-  diamond_leggings: 525
-  diamond_boots: 300
+  diamond_sword: 105
+  diamond_pickaxe: 157
+  diamond_axe: 157
+  diamond_shovel: 52
+  diamond_hoe: 105
+  diamond_helmet: 262
+  diamond_chestplate: 420
+  diamond_leggings: 367
+  diamond_boots: 210
 
   # Iron tools (medium sell value)
-  iron_sword: 12
-  iron_pickaxe: 18
-  iron_axe: 18
-  iron_shovel: 6
-  iron_hoe: 12
-  iron_helmet: 30
-  iron_chestplate: 48
-  iron_leggings: 42
-  iron_boots: 24
+  iron_sword: 8
+  iron_pickaxe: 12
+  iron_axe: 12
+  iron_shovel: 4
+  iron_hoe: 8
+  iron_helmet: 21
+  iron_chestplate: 33
+  iron_leggings: 29
+  iron_boots: 16
 
   # ============================================
   # MISCELLANEOUS
   # ============================================
 
-  saddle: 100
-  name_tag: 75
-  lead: 25
-  book: 10
-  paper: 3
-  sugar_cane: 2
-  cactus: 2
+  saddle: 70
+  name_tag: 52
+  lead: 17
+  book: 7
+  paper: 2
+  sugar_cane: 1
+  cactus: 1
   bamboo: 1
   kelp: 1
-  sea_pickle: 5
-  honey_bottle: 15
-  honeycomb: 10
-  turtle_egg: 100
-  turtle_scute: 75
+  sea_pickle: 3
+  honey_bottle: 10
+  honeycomb: 7
+  turtle_egg: 70
+  turtle_scute: 52
 
   # Potions base items
-  nether_wart: 5
-  fermented_spider_eye: 15
-  blaze_powder: 40
-  magma_cream: 15
-  glistering_melon_slice: 30
-  rabbit_foot: 50
-
-  # Brewing results aren't typically sellable
-  # Players should use potions, not sell them
+  fermented_spider_eye: 10
+  blaze_powder: 28
+  glistering_melon_slice: 21
+  rabbit_foot: 35
