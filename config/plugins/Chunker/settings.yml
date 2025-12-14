@@ -1,0 +1,34 @@
+# Chunker Pre-generation Settings
+# Auto-runs when no players are online, pauses when players join
+
+world:
+  # Enable auto pre-generation when no players are online
+  auto_run: true
+  # Task queue timer (50-70 recommended for modern CPUs)
+  task_queue_timer: 60
+  # Auto-distribute tasks based on thread count
+  parallel_tasks_multiplier: auto
+  # Progress update interval
+  print_update_delay: 30s
+  # Pre-generate 5000 blocks radius (10,000 x 10,000 area)
+  radius: 5000b
+  # Center at world spawn
+  center: 0 0
+
+world_nether:
+  auto_run: true
+  task_queue_timer: 60
+  parallel_tasks_multiplier: auto
+  print_update_delay: 30s
+  # Nether is 8x smaller scale, so 625 blocks = equivalent of 5000 overworld
+  radius: 625b
+  center: 0 0
+
+world_the_end:
+  auto_run: true
+  task_queue_timer: 60
+  parallel_tasks_multiplier: auto
+  print_update_delay: 30s
+  # End islands - smaller radius
+  radius: 2000b
+  center: 0 0

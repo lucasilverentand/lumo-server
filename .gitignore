@@ -1,0 +1,19 @@
+# Environment files with secrets
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Local overrides
+docker-compose.override.yml
+*.local
+
+# Build artifacts
+*.log

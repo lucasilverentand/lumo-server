@@ -1,0 +1,58 @@
+services:
+  minecraft:
+    build:
+      context: .
+      args:
+        MC_VERSION: "1.21.4"
+        BASE_IMAGE: "itzg/minecraft-server:java21"
+    image: lumo-server:latest
+    container_name: lumo-minecraft
+    ports:
+      - "25565:25565"     # Minecraft
+      - "8100:8100"       # BlueMap
+      - "24454:24454/udp" # Simple Voice Chat
+    environment:
+      # These can be overridden, defaults are in the Dockerfile
+      MEMORY: "4G"
+      WHITELIST: ""
+      OPS: ""
+      # RCON configuration for web admin
+      RCON_PASSWORD: ${RCON_PASSWORD:-minecraft}
+      ENABLE_RCON: "true"
+      # Disable autopause so Chunker can pre-generate when no players online
+      ENABLE_AUTOPAUSE: "false"
+    volumes:
+      # World data persists outside the image
+      - minecraft-data:/data
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    networks:
+      - minecraft-net
+
+  rcon-web:
+    image: itzg/rcon
+    container_name: lumo-rcon-web
+    ports:
+      - "4326:4326"       # RCON Web UI
+      - "4327:4327"       # WebSocket
+    environment:
+      RWA_USERNAME: admin
+      RWA_PASSWORD: ${RCON_WEB_PASSWORD:-admin}
+      RWA_ADMIN: "true"
+      # Connection to Minecraft server
+      RWA_RCON_HOST: minecraft
+      RWA_RCON_PORT: 25575
+      RWA_RCON_PASSWORD: ${RCON_PASSWORD:-minecraft}
+    depends_on:
+      - minecraft
+    restart: unless-stopped
+    networks:
+      - minecraft-net
+
+networks:
+  minecraft-net:
+    driver: bridge
+
+volumes:
+  minecraft-data:
