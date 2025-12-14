@@ -387,7 +387,10 @@ jobs:
 
       - name: Tag and push
         run: |
-          for tag in ${{ steps.meta.outputs.tags }}; do
-            docker tag lumo-server:test "$tag"
-            docker push "$tag"
+          echo "${{ steps.meta.outputs.tags }}" | while read -r tag; do
+            if [ -n "$tag" ]; then
+              echo "Tagging and pushing: $tag"
+              docker tag lumo-server:test "$tag"
+              docker push "$tag"
+            fi
           done
