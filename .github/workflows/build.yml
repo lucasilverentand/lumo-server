@@ -280,7 +280,8 @@ jobs:
           loaded=0
           failed=0
           for plugin in "${plugins[@]}"; do
-            if echo "$logs" | grep -qi "\[$plugin\].*Enabling"; then
+            # Handle special cases like LagFixer which uses emoji in logs
+            if echo "$logs" | grep -qi "\[$plugin\].*Enabling\|Enabling $plugin\|Enabling LagFixer"; then
               echo "✓ $plugin"
               loaded=$((loaded + 1))
             else
