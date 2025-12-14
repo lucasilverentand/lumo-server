@@ -130,11 +130,15 @@ RUN echo "Downloading SmoothTimber from Spiget..." && \
     curl -sSL -o /downloads/plugins/SmoothTimber.jar \
     "https://api.spiget.org/v2/resources/39965/download"
 
-# NOTE: Citizens and Shopkeepers have external downloads that can't be automated.
-# To add NPC merchants, manually download:
-# - Citizens: https://ci.citizensnpcs.co/job/Citizens2/
-# - Shopkeepers: https://dev.bukkit.org/projects/shopkeepers/files
-# For now, use EssentialsX sign shops and /sell hand for economy.
+# Download Citizens from Jenkins CI (NPC framework)
+RUN echo "Downloading Citizens from Jenkins CI..." && \
+    curl -sSL -o /downloads/plugins/Citizens.jar \
+    "https://ci.citizensnpcs.co/job/Citizens2/lastSuccessfulBuild/artifact/dist/target/Citizens-2.0.41-b4021.jar"
+
+# Download Shopkeepers from GitHub (NPC shop functionality)
+RUN echo "Downloading Shopkeepers from GitHub..." && \
+    curl -sSL -o /downloads/plugins/Shopkeepers.jar \
+    "https://raw.githubusercontent.com/Shopkeepers/Repository/main/releases/com/nisovin/shopkeepers/Shopkeepers/2.24.0/Shopkeepers-2.24.0.jar"
 
 # Download Terralith datapack
 RUN download_datapack terralith ${MC_VERSION}

@@ -142,8 +142,9 @@ jobs:
             "LuckPerms"
             "Essentials"
             "Vault"
+            "Citizens"
+            "Shopkeepers"
           )
-          # Note: Citizens and Shopkeepers require manual installation (external downloads)
 
           logs=$(docker logs test-server 2>&1)
           failed=0
