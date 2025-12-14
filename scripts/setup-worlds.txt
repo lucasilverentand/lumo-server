@@ -8,30 +8,30 @@
 # ============================================
 # AUTOMATED SETUP (runs on startup)
 # ============================================
+# Commands are ordered: create all worlds first, then configure them.
+# This ensures one failed creation doesn't block others.
+# Each RCON command runs independently - failures don't stop subsequent commands.
 
-# Hub World (Void) - Portal hub
+# Step 1: Create all worlds
 mv create hub NORMAL -g VoidWorld
+mv create lumo_wilds NORMAL
+mv create lumo_wilds_nether NETHER
+mv create lumo_wilds_the_end THE_END
+mv create lumo_city NORMAL -g PlotSquared
+
+# Step 2: Configure hub (void portal hub)
 mvm set gamemode adventure hub
 mvm set difficulty peaceful hub
 mvm set pvp false hub
 
-# Lumo Wilds (Survival) - Main survival world with Terralith
-mv create lumo_wilds NORMAL
+# Step 3: Configure lumo_wilds (survival)
 mvm set gamemode survival lumo_wilds
 mvm set difficulty hard lumo_wilds
 
-# Linked nether and end for lumo_wilds
-mv create lumo_wilds_nether NETHER
-mv create lumo_wilds_the_end THE_END
-
-# Lumo City (PlotSquared) - Plot-based city
-mv create lumo_city NORMAL -g PlotSquared
+# Step 4: Configure lumo_city (plot world)
 mvm set gamemode survival lumo_city
 mvm set difficulty peaceful lumo_city
 mvm set pvp false lumo_city
-
-# Set spawn to hub
-mv setspawn hub
 
 # ============================================
 # MANUAL SETUP (one-time after first boot)

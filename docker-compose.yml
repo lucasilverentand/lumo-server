@@ -22,17 +22,19 @@ services:
       # Disable autopause so Chunker can pre-generate when no players online
       ENABLE_AUTOPAUSE: "false"
       # Auto-setup worlds on startup (idempotent - won't recreate existing worlds)
+      # Commands are ordered: create all worlds first, then configure them
+      # This ensures one failed creation doesn't block others
       RCON_CMDS_STARTUP: |-
         mv create hub NORMAL -g VoidWorld
-        mvm set gamemode adventure hub
-        mvm set difficulty peaceful hub
-        mvm set pvp false hub
         mv create lumo_wilds NORMAL
-        mvm set gamemode survival lumo_wilds
-        mvm set difficulty hard lumo_wilds
         mv create lumo_wilds_nether NETHER
         mv create lumo_wilds_the_end THE_END
         mv create lumo_city NORMAL -g PlotSquared
+        mvm set gamemode adventure hub
+        mvm set difficulty peaceful hub
+        mvm set pvp false hub
+        mvm set gamemode survival lumo_wilds
+        mvm set difficulty hard lumo_wilds
         mvm set gamemode survival lumo_city
         mvm set difficulty peaceful lumo_city
         mvm set pvp false lumo_city
