@@ -130,6 +130,12 @@ RUN echo "Downloading SmoothTimber from Spiget..." && \
     curl -sSL -o /downloads/plugins/SmoothTimber.jar \
     "https://api.spiget.org/v2/resources/39965/download"
 
+# NOTE: Citizens and Shopkeepers have external downloads that can't be automated.
+# To add NPC merchants, manually download:
+# - Citizens: https://ci.citizensnpcs.co/job/Citizens2/
+# - Shopkeepers: https://dev.bukkit.org/projects/shopkeepers/files
+# For now, use EssentialsX sign shops and /sell hand for economy.
+
 # Download Terralith datapack
 RUN download_datapack terralith ${MC_VERSION}
 
@@ -157,11 +163,14 @@ COPY --chown=1000:1000 --from=plotsquared-builder /output/PlotSquared-Bukkit.jar
 # Copy datapacks from downloader stage
 COPY --chown=1000:1000 --from=downloader /downloads/datapacks/ /datapacks/
 
-# Copy BlueMap configuration (needs to be in plugins/BlueMap/ for BlueMap to find it)
+# Copy plugin configurations
 COPY --chown=1000:1000 config/plugins/BlueMap/ /plugins/BlueMap/
-
-# Copy Chunker configuration (auto pre-generation when no players online)
 COPY --chown=1000:1000 config/plugins/Chunker/ /plugins/Chunker/
+COPY --chown=1000:1000 config/plugins/Essentials/ /plugins/Essentials/
+COPY --chown=1000:1000 config/plugins/PlotSquared/ /plugins/PlotSquared/
+
+# Copy setup documentation
+COPY --chown=1000:1000 scripts/ /scripts/
 
 # Server configuration defaults (can be overridden at runtime)
 # Note: VERSION must be hardcoded here as Docker ARGs don't persist in ENV

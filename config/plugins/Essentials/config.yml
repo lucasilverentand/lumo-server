@@ -1,0 +1,126 @@
+# Essentials Configuration for Lumo Server
+# Economy and basic settings
+
+############################################################
+# +------------------------------------------------------+ #
+# |                   Economy Settings                    | #
+# +------------------------------------------------------+ #
+############################################################
+
+# Starting balance for new players
+starting-balance: 1000
+
+# The maximum amount of money a player can have.
+# Set to -1 for unlimited.
+max-money: 10000000000000
+
+# The minimum amount of money a player can have (can be negative for debt).
+min-money: -10000
+
+# Currency symbol
+currency-symbol: '$'
+
+# Currency format (# = digit, 0 = digit with leading zero)
+currency-format: '#,##0.00'
+
+# Whether to show zero cents
+show-zero-cents: true
+
+############################################################
+# +------------------------------------------------------+ #
+# |                    Sell Settings                      | #
+# +------------------------------------------------------+ #
+############################################################
+
+# Allow selling items with /sell
+sell:
+  # Items can be sold for their worth value
+  enabled: true
+  # Whether to show confirmation messages
+  confirm: true
+
+############################################################
+# +------------------------------------------------------+ #
+# |                   Spawn Settings                      | #
+# +------------------------------------------------------+ #
+############################################################
+
+# Spawn priority - where to spawn new players
+# Set to "none" to use world spawn or "essentials" to use /setspawn
+spawn-priority: essentials
+
+# Whether to spawn players at spawn on join
+spawn-on-join: newbies
+
+# Spawn on join for these groups (set spawn-on-join to a group name)
+# spawn-on-join: default
+
+# Teleport players to spawn on death
+respawn-at-home: false
+
+############################################################
+# +------------------------------------------------------+ #
+# |                  Teleport Settings                    | #
+# +------------------------------------------------------+ #
+############################################################
+
+# Teleport delay in seconds (0 = instant)
+teleport-delay: 3
+
+# Teleport cooldown in seconds
+teleport-cooldown: 5
+
+# Whether movement cancels teleport
+teleport-cooldown-on-move: true
+
+############################################################
+# +------------------------------------------------------+ #
+# |                    Chat Settings                      | #
+# +------------------------------------------------------+ #
+############################################################
+
+# Whether to change chat format (requires permissions)
+change-playerlist: true
+
+# Chat format
+chat:
+  format: '<{DISPLAYNAME}> {MESSAGE}'
+
+############################################################
+# +------------------------------------------------------+ #
+# |                    Homes Settings                     | #
+# +------------------------------------------------------+ #
+############################################################
+
+# Number of homes players can set by default
+# Use permissions for more: essentials.sethome.multiple.<number>
+sethome-multiple:
+  default: 3
+  vip: 5
+  staff: 10
+
+############################################################
+# +------------------------------------------------------+ #
+# |                   Other Settings                      | #
+# +------------------------------------------------------+ #
+############################################################
+
+# Heal newbies on first join
+heal-on-newbie: true
+
+# Kit delay in seconds (use 0 for one-time kits)
+kits:
+  starter:
+    delay: 0
+    items:
+      - 272 1 # Stone sword
+      - 274 1 # Stone pickaxe
+      - 275 1 # Stone axe
+      - 260 16 # Apples
+      - 50 32 # Torches
+
+# Enable per-world chat
+per-world-chat: false
+
+# Debug mode
+debug: false

@@ -1,0 +1,83 @@
+# PlotSquared World Configuration for Lumo Server
+# This file defines the plot world settings
+
+worlds:
+  lumo_city:
+    # World type
+    plot_world_type: "normal"
+
+    # Plot dimensions
+    plot:
+      # Plot size (42x42 blocks)
+      size: 42
+      # Height of the plot floor
+      height: 64
+      # Maximum build height above plot floor
+      max_height: 256
+      # Bedrock at bottom
+      bedrock: true
+
+    # Road dimensions
+    road:
+      # Width of roads between plots
+      width: 7
+      # Height of roads (same as plot height)
+      height: 64
+
+    # Wall around plots
+    wall:
+      # Height of wall blocks
+      height: 1
+      # Block for plot walls
+      block: "minecraft:stone_brick_wall"
+      # Block for claimed plot walls
+      claimed: "minecraft:mossy_stone_brick_wall"
+
+    # Floor blocks
+    floor:
+      # Main plot floor
+      block: "minecraft:grass_block"
+      # Material below the floor
+      filling: "minecraft:dirt"
+      # Road floor material
+      road: "minecraft:gray_concrete"
+      # Wall filling
+      wall_filling: "minecraft:stone"
+
+    # Schematic configuration (optional)
+    schematic:
+      # Use schematic on claim
+      on_claim: false
+      # Schematic file
+      file: ""
+
+    # World settings
+    world:
+      # Gamemode for this world (0=survival, 1=creative, 2=adventure)
+      gamemode: 0
+      # Home teleport position ("default" or "side")
+      home_teleport: "side"
+
+    # Flags (default plot flags)
+    flags:
+      # PvP in plots
+      pvp: false
+      # Mob spawning
+      mob-spawning: false
+      # Animal spawning
+      animal-spawn: false
+      # Hostile mob spawning
+      hostile-spawn: false
+      # Block ignition
+      block-ignition: false
+      # Use (buttons, doors, etc)
+      use: true
+      # Deny teleport
+      deny-teleport: false
+
+    # Economy settings (override global)
+    economy:
+      prices:
+        claim: 15000
+        merge: 10000
+        sell: 7500

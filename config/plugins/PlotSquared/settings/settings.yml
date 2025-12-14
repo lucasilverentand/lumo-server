@@ -1,0 +1,47 @@
+# PlotSquared Settings for Lumo Server
+
+# Enable economy integration (requires Vault + economy plugin)
+economy:
+  enabled: true
+
+  # Default prices (can be overridden per-world in worlds.yml)
+  prices:
+    # Price to claim a plot
+    claim: 15000
+    # Price to merge plots together
+    merge: 10000
+    # How much you get back when selling a plot
+    sell: 7500
+
+# Plots configuration
+plots:
+  # Maximum number of plots a player can claim (default group)
+  # Override with permission: plots.plot.<number>
+  max: 10
+
+# Teleport settings
+teleport:
+  # Delay before teleporting to a plot
+  delay: 0
+  # Whether to teleport on login to last location
+  on-login: false
+
+# Chat settings
+chat:
+  # Enable plot chat (messages only go to people on same plot)
+  enabled: false
+
+# Schematics settings
+schematics:
+  # Save schematics on /plot download
+  save-path: "schematics"
+
+# UUID settings
+uuid:
+  # Use offline UUIDs (set to true for offline mode servers)
+  offline: false
+
+# General settings
+general:
+  # Send update notifications to ops
+  update-notifications: true

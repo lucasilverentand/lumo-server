@@ -1,0 +1,88 @@
+# Lumo Server World Setup Commands
+# Run these commands in-game or via RCON after first server start
+# These commands only need to be run ONCE on initial setup
+
+# ============================================
+# STEP 1: Create Hub World (Void)
+# ============================================
+# Creates a void world using VoidWorld generator
+mv create hub NORMAL -g VoidWorld
+mv modify set gamemode adventure hub
+mv modify set difficulty peaceful hub
+mv modify set pvp false hub
+mv modify set animals false hub
+mv modify set monsters false hub
+
+# ============================================
+# STEP 2: Create Lumo Wilds (Survival)
+# ============================================
+# Creates the main survival world with normal generation
+# Terralith datapack will apply automatically
+mv create lumo_wilds NORMAL
+mv modify set gamemode survival lumo_wilds
+mv modify set difficulty hard lumo_wilds
+mv modify set pvp false lumo_wilds
+
+# Create linked nether and end
+mv create lumo_wilds_nether NETHER
+mv create lumo_wilds_the_end END
+
+# ============================================
+# STEP 3: Create Lumo City (PlotSquared)
+# ============================================
+# Creates the plot world using PlotSquared generator
+mv create lumo_city NORMAL -g PlotSquared
+mv modify set gamemode survival lumo_city
+mv modify set difficulty peaceful lumo_city
+mv modify set pvp false lumo_city
+
+# ============================================
+# STEP 4: Set Spawn Points
+# ============================================
+# Set global spawn to hub
+mv setspawn hub
+
+# Set first spawn for new players
+# (Run this while standing at desired spawn location)
+# /setworldspawn
+
+# ============================================
+# STEP 5: Configure Essentials Spawn
+# ============================================
+# Set Essentials spawn (run while in hub at spawn location)
+# /setspawn
+
+# ============================================
+# STEP 6: Reload Configurations
+# ============================================
+mv reload
+bluemap reload
+
+# ============================================
+# STEP 7: Start Chunk Pre-generation (Optional)
+# ============================================
+# Pre-generate chunks around spawn in lumo_wilds
+# Run in lumo_wilds world:
+# /chunker world lumo_wilds
+# /pregen start
+
+# ============================================
+# PORTAL SETUP (Manual)
+# ============================================
+# After building portal structures in hub, create portals:
+# 1. Stand in the portal area in hub
+# 2. Select the portal region with WorldEdit: //wand, //pos1, //pos2
+# 3. Create portal: /mvp create <name> <destination>
+#
+# Example:
+# /mvp create wilds_portal lumo_wilds
+# /mvp create city_portal lumo_city
+
+# ============================================
+# NPC MERCHANT SETUP (Manual)
+# ============================================
+# Create NPC merchants in lumo_wilds and lumo_city:
+# 1. Go to merchant location
+# 2. /npc create <Merchant Name>
+# 3. /shopkeeper
+# 4. Configure shop items via GUI

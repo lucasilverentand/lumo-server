@@ -7,6 +7,7 @@ on:
     paths:
       - "Dockerfile"
       - "config/**"
+      - "scripts/**"
       - ".github/workflows/build.yml"
       - "docker-compose*.yml"
   pull_request:
@@ -142,6 +143,7 @@ jobs:
             "Essentials"
             "Vault"
           )
+          # Note: Citizens and Shopkeepers require manual installation (external downloads)
 
           logs=$(docker logs test-server 2>&1)
           failed=0
