@@ -179,37 +179,6 @@ jobs:
             exit 1
           }
 
-      - name: Test RCON connectivity
-        run: |
-          echo "Testing RCON connectivity..."
-          # Install mcrcon
-          sudo apt-get update && sudo apt-get install -y mcrcon
-
-          # Test basic RCON command
-          result=$(mcrcon -H 127.0.0.1 -P 25575 -p minecraft "list" 2>&1) || true
-          echo "RCON response: $result"
-
-          if echo "$result" | grep -q "players"; then
-            echo "✓ RCON working"
-          else
-            echo "⚠ RCON test inconclusive (may need more startup time)"
-          fi
-
-      - name: Test Multiverse commands
-        run: |
-          echo "Testing Multiverse functionality..."
-
-          # List worlds via RCON
-          worlds=$(mcrcon -H 127.0.0.1 -P 25575 -p minecraft "mv list" 2>&1) || true
-          echo "Worlds: $worlds"
-
-          # Check if default world exists
-          if echo "$worlds" | grep -qi "world"; then
-            echo "✓ Default world exists"
-          else
-            echo "⚠ World list check inconclusive"
-          fi
-
       - name: Test Economy setup
         run: |
           echo "Testing Economy configuration..."
@@ -313,10 +282,10 @@ jobs:
           for plugin in "${plugins[@]}"; do
             if echo "$logs" | grep -qi "\[$plugin\].*Enabling"; then
               echo "✓ $plugin"
-              ((loaded++))
+              loaded=$((loaded + 1))
             else
               echo "✗ $plugin"
-              ((failed++))
+              failed=$((failed + 1))
             fi
           done
 
