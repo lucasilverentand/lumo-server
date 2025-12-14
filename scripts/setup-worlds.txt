@@ -38,18 +38,18 @@ mv create lumo_wilds_the_end THE_END
 mv create lumo_city NORMAL -g PlotSquared
 
 # Configure hub
-mvm set gamemode adventure hub
-mvm set difficulty peaceful hub
-mvm set pvp false hub
+mv modify hub set gamemode adventure
+mv modify hub set difficulty peaceful
+mv modify hub set pvp false
 
 # Configure lumo_wilds
-mvm set gamemode survival lumo_wilds
-mvm set difficulty hard lumo_wilds
+mv modify lumo_wilds set gamemode survival
+mv modify lumo_wilds set difficulty hard
 
 # Configure lumo_city
-mvm set gamemode survival lumo_city
-mvm set difficulty peaceful lumo_city
-mvm set pvp false lumo_city
+mv modify lumo_city set gamemode survival
+mv modify lumo_city set difficulty peaceful
+mv modify lumo_city set pvp false
 
 # ============================================
 # MANUAL SETUP (one-time after first boot)

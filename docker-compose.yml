@@ -32,7 +32,9 @@ services:
       - minecraft-net
 
   world-init:
-    image: itzg/rcon-cli
+    build:
+      context: ./docker/world-init
+    image: lumo-world-init:latest
     container_name: lumo-world-init
     depends_on:
       minecraft:
@@ -43,73 +45,6 @@ services:
       RCON_PASSWORD: ${RCON_PASSWORD:-minecraft}
     volumes:
       - minecraft-data:/data:ro
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        echo "========================================"
-        echo "  Lumo Server World Initialization"
-        echo "========================================"
-        echo ""
-
-        # Function to check if world exists
-        world_exists() {
-          [ -d "/data/$$1" ]
-        }
-
-        # Function to create world if missing
-        create_world() {
-          world_name=$$1
-          shift
-          if world_exists "$$world_name"; then
-            echo "[SKIP] World '$$world_name' already exists"
-          else
-            echo "[CREATE] Creating world '$$world_name'..."
-            rcon-cli "mv create $$world_name $$@" || echo "[WARN] Failed to create $$world_name"
-          fi
-        }
-
-        echo "--- Phase 1: Creating Worlds ---"
-        create_world hub NORMAL -g VoidWorld
-        create_world lumo_wilds NORMAL
-        create_world lumo_wilds_nether NETHER
-        create_world lumo_wilds_the_end THE_END
-        create_world lumo_city NORMAL -g PlotSquared
-        echo ""
-
-        echo "--- Phase 2: Configuring Worlds ---"
-
-        if world_exists hub; then
-          echo "[CONFIG] Configuring hub..."
-          rcon-cli "mvm set gamemode adventure hub"
-          rcon-cli "mvm set difficulty peaceful hub"
-          rcon-cli "mvm set pvp false hub"
-        fi
-
-        if world_exists lumo_wilds; then
-          echo "[CONFIG] Configuring lumo_wilds..."
-          rcon-cli "mvm set gamemode survival lumo_wilds"
-          rcon-cli "mvm set difficulty hard lumo_wilds"
-        fi
-
-        if world_exists lumo_city; then
-          echo "[CONFIG] Configuring lumo_city..."
-          rcon-cli "mvm set gamemode survival lumo_city"
-          rcon-cli "mvm set difficulty peaceful lumo_city"
-          rcon-cli "mvm set pvp false lumo_city"
-        fi
-
-        echo ""
-        echo "--- Summary ---"
-        for world in hub lumo_wilds lumo_wilds_nether lumo_wilds_the_end lumo_city; do
-          if world_exists $$world; then
-            echo "✓ $$world"
-          else
-            echo "✗ $$world (not created)"
-          fi
-        done
-
-        echo ""
-        echo "World initialization complete!"
     networks:
       - minecraft-net
     restart: "no"

@@ -59,7 +59,7 @@ configure_world() {
         return 1
     fi
 
-    rcon-cli "mvm set $property $value $world_name" > /dev/null 2>&1 || true
+    rcon-cli "mv modify $world_name set $property $value" > /dev/null 2>&1 || true
 }
 
 echo "========================================"
