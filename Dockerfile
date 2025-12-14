@@ -69,6 +69,8 @@ voidworld paper
 simpledeathchest paper
 luckperms paper
 essentialsx paper
+fancynpcs paper
+quickshop-hikari paper
 PLUGINS
 
 # Download from other sources
@@ -78,12 +80,7 @@ RUN curl -sSL -o /downloads/plugins/Vault.jar \
 RUN curl -sSL -o /downloads/plugins/SmoothTimber.jar \
     "https://api.spiget.org/v2/resources/39965/download" && echo "✓ SmoothTimber"
 
-# Citizens - disabled due to NMS compatibility issues with Paper 1.21.4
-# Shopkeepers works with vanilla villagers as an alternative
-# TODO: Re-enable when Citizens has a compatible build
-# RUN curl -sSL -o /downloads/plugins/Citizens.jar \
-#     "https://ci.citizensnpcs.co/job/Citizens2/3800/artifact/dist/target/Citizens-2.0.38-b3800.jar" && echo "✓ Citizens"
-
+# Shopkeepers for NPC-based admin shops (works with FancyNpcs or vanilla villagers)
 RUN curl -sSL -o /downloads/plugins/Shopkeepers.jar \
     "https://raw.githubusercontent.com/Shopkeepers/Repository/main/releases/com/nisovin/shopkeepers/Shopkeepers/2.24.0/Shopkeepers-2.24.0.jar" && echo "✓ Shopkeepers"
 
