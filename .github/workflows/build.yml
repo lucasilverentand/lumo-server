@@ -101,6 +101,7 @@ jobs:
           docker run --rm --entrypoint="" lumo-server:test ls -la /entrypoint.sh
           docker run --rm --entrypoint="" lumo-server:test ls -la /init-worlds.sh
           docker run --rm --entrypoint="" lumo-server:test ls -la /autopause.sh
+          docker run --rm --entrypoint="" lumo-server:test ls -la /wake-listener.py
           docker run --rm --entrypoint="" lumo-server:test ls -la /server/paper.jar
 
           echo "✓ All essential files present"
@@ -110,7 +111,7 @@ jobs:
           echo "✓ mcrcon installed"
 
           # Check plugins directory
-          plugin_count=$(docker run --rm --entrypoint="" lumo-server:test ls /server/plugins/*.jar | wc -l)
+          plugin_count=$(docker run --rm --entrypoint="" lumo-server:test sh -c 'ls /server/plugins/*.jar | wc -l')
           echo "✓ Found $plugin_count plugin JARs"
 
           if [ "$plugin_count" -lt 15 ]; then
