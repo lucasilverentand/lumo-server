@@ -108,11 +108,26 @@ AIKAR_FLAGS="-XX:+UseG1GC \
 JVM_OPTS="${MEMORY_OPTS} ${AIKAR_FLAGS}"
 
 # =============================================================================
+# Start Background Services
+# =============================================================================
+
+# World initialization
+if [ -f "/init-worlds.sh" ]; then
+    log "Starting world initialization in background..."
+    /init-worlds.sh &
+fi
+
+# Auto-pause (monitors players and Chunker, pauses when idle)
+if [ "${ENABLE_AUTOPAUSE}" = "true" ] && [ -f "/autopause.sh" ]; then
+    log "Starting auto-pause monitor (timeout: ${AUTOPAUSE_TIMEOUT:-10}m)..."
+    /autopause.sh &
+fi
+
+# =============================================================================
 # Start Server
 # =============================================================================
 log "Starting Minecraft server..."
 log "Memory: ${MEMORY}"
-log "Version: Paper $(cat /data/paper.jar 2>/dev/null | head -c 100 || echo 'unknown')"
 
 cd /data
 exec java ${JVM_OPTS} -jar paper.jar --nogui "$@"

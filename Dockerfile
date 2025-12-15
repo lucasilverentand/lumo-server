@@ -5,7 +5,16 @@ ARG MC_VERSION=1.21.4
 ARG JAVA_VERSION=21
 
 # =============================================================================
-# Stage 1: Build PlotSquared from source
+# Stage 1: Build mcrcon for RCON communication
+# =============================================================================
+FROM alpine:3.20 AS mcrcon-builder
+
+RUN apk add --no-cache gcc musl-dev make git
+RUN git clone --depth 1 https://github.com/Tiiffi/mcrcon.git /tmp/mcrcon && \
+    cd /tmp/mcrcon && make
+
+# =============================================================================
+# Stage 2: Build PlotSquared from source
 # =============================================================================
 FROM eclipse-temurin:21-jdk-alpine AS plotsquared-builder
 
@@ -17,7 +26,7 @@ RUN ./gradlew :plotsquared-bukkit:shadowJar --no-daemon -x test -q
 RUN cp Bukkit/build/libs/plotsquared-bukkit-*.jar /PlotSquared.jar
 
 # =============================================================================
-# Stage 2: Download everything
+# Stage 3: Download everything
 # =============================================================================
 FROM alpine:3.20 AS downloader
 
@@ -57,7 +66,7 @@ multiverse-netherportals paper
 multiverse-signportals paper
 multiverse-inventories paper
 bluemap paper
-worldedit paper
+fastasyncworldedit paper
 worldguard paper
 simple-voice-chat paper
 chunker paper
@@ -97,7 +106,7 @@ RUN VERSION_DATA=$(curl -sS "https://api.modrinth.com/v2/project/terralith/versi
 RUN echo "=== Downloaded ===" && ls -la /downloads/plugins/ && ls -la /downloads/datapacks/
 
 # =============================================================================
-# Stage 2: Final minimal image
+# Stage 4: Final minimal image
 # =============================================================================
 FROM eclipse-temurin:${JAVA_VERSION}-jre-alpine
 
@@ -109,7 +118,7 @@ RUN addgroup -g 1000 minecraft && \
     adduser -u 1000 -G minecraft -h /data -D minecraft
 
 # Install minimal runtime dependencies
-RUN apk add --no-cache bash tini netcat-openbsd
+RUN apk add --no-cache bash tini netcat-openbsd iproute2 procps
 
 WORKDIR /server
 
@@ -118,14 +127,19 @@ COPY --from=downloader /downloads/paper.jar /server/paper.jar
 COPY --from=downloader /downloads/plugins/ /server/plugins/
 COPY --from=downloader /downloads/datapacks/ /server/datapacks/
 
+# Copy mcrcon for RCON commands
+COPY --from=mcrcon-builder /tmp/mcrcon/mcrcon /usr/local/bin/mcrcon
+
 # Copy plugin configurations
 COPY --chown=minecraft:minecraft config/plugins/BlueMap/ /server/plugins/BlueMap/
 COPY --chown=minecraft:minecraft config/plugins/Chunker/ /server/plugins/Chunker/
 COPY --chown=minecraft:minecraft config/plugins/Essentials/ /server/plugins/Essentials/
 COPY --chown=minecraft:minecraft config/plugins/PlotSquared/ /server/plugins/PlotSquared/
 
-# Copy entrypoint
+# Copy entrypoint and scripts
 COPY --chmod=755 docker/server/entrypoint.sh /entrypoint.sh
+COPY --chmod=755 docker/server/init-worlds.sh /init-worlds.sh
+COPY --chmod=755 docker/server/autopause.sh /autopause.sh
 
 # Set ownership
 RUN chown -R minecraft:minecraft /server
@@ -148,7 +162,10 @@ ENV MEMORY=4G \
     ENFORCE_WHITELIST=false \
     ENABLE_RCON=true \
     RCON_PASSWORD=minecraft \
-    RCON_PORT=25575
+    RCON_PORT=25575 \
+    ENABLE_AUTOPAUSE=true \
+    AUTOPAUSE_TIMEOUT=10 \
+    AUTOPAUSE_POLL_INTERVAL=30
 
 # Ports
 EXPOSE 25565/tcp

@@ -1,7 +1,8 @@
 #!/bin/bash
-set -e
+# World initialization script - runs in background after server starts
+# Uses localhost since we're in the same container
 
-RCON_HOST="${RCON_HOST:-minecraft}"
+RCON_HOST="localhost"
 RCON_PORT="${RCON_PORT:-25575}"
 RCON_PASSWORD="${RCON_PASSWORD:-minecraft}"
 

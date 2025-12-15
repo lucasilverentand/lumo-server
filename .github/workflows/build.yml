@@ -7,9 +7,8 @@ on:
     paths:
       - "Dockerfile"
       - "config/**"
-      - "scripts/**"
+      - "docker/**"
       - ".github/workflows/build.yml"
-      - "docker-compose*.yml"
   pull_request:
     branches:
       - main
@@ -61,7 +60,6 @@ jobs:
           tags: lumo-server:test
           build-args: |
             MC_VERSION=${{ env.MC_VERSION }}
-            BASE_IMAGE=itzg/minecraft-server:java21
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -95,6 +93,32 @@ jobs:
         run: |
           docker load -i /tmp/lumo-server.tar
 
+      - name: Verify image structure
+        run: |
+          echo "Checking image structure..."
+
+          # Check essential files exist
+          docker run --rm --entrypoint="" lumo-server:test ls -la /entrypoint.sh
+          docker run --rm --entrypoint="" lumo-server:test ls -la /init-worlds.sh
+          docker run --rm --entrypoint="" lumo-server:test ls -la /autopause.sh
+          docker run --rm --entrypoint="" lumo-server:test ls -la /server/paper.jar
+
+          echo "✓ All essential files present"
+
+          # Check mcrcon is available
+          docker run --rm --entrypoint="" lumo-server:test which mcrcon
+          echo "✓ mcrcon installed"
+
+          # Check plugins directory
+          plugin_count=$(docker run --rm --entrypoint="" lumo-server:test ls /server/plugins/*.jar | wc -l)
+          echo "✓ Found $plugin_count plugin JARs"
+
+          if [ "$plugin_count" -lt 15 ]; then
+            echo "ERROR: Expected at least 15 plugins, found $plugin_count"
+            docker run --rm --entrypoint="" lumo-server:test ls -la /server/plugins/
+            exit 1
+          fi
+
       - name: Start server
         run: |
           docker run -d --name test-server \
@@ -102,7 +126,7 @@ jobs:
             -e MEMORY=2G \
             -e ENABLE_AUTOPAUSE=false \
             -e ENABLE_RCON=true \
-            -e RCON_PASSWORD=minecraft \
+            -e RCON_PASSWORD=testpassword \
             -p 25565:25565 \
             -p 25575:25575 \
             lumo-server:test
@@ -125,15 +149,33 @@ jobs:
           docker logs test-server
           exit 1
 
+      - name: Test RCON connectivity
+        run: |
+          echo "Testing RCON..."
+
+          # Install mcrcon for testing
+          sudo apt-get update && sudo apt-get install -y build-essential git
+          git clone https://github.com/Tiiffi/mcrcon.git /tmp/mcrcon
+          cd /tmp/mcrcon && make && sudo cp mcrcon /usr/local/bin/
+
+          # Test RCON connection
+          result=$(mcrcon -H 127.0.0.1 -P 25575 -p testpassword "list" 2>&1)
+          if echo "$result" | grep -q "players online"; then
+            echo "✓ RCON working: $result"
+          else
+            echo "✗ RCON failed: $result"
+            exit 1
+          fi
+
       - name: Verify plugins loaded
         run: |
           echo "Checking plugin loading..."
 
-          # List of expected plugins
+          # List of expected plugins (updated for our custom image)
           expected_plugins=(
             "Multiverse-Core"
             "BlueMap"
-            "WorldEdit"
+            "FastAsyncWorldEdit"
             "WorldGuard"
             "ViaVersion"
             "voicechat"
@@ -145,15 +187,38 @@ jobs:
             "LuckPerms"
             "Essentials"
             "Vault"
-            "Citizens"
+            "FancyNpcs"
             "Shopkeepers"
+            "QuickShop"
           )
 
           logs=$(docker logs test-server 2>&1)
           failed=0
 
           for plugin in "${expected_plugins[@]}"; do
-            if echo "$logs" | grep -qi "\[$plugin\]"; then
+            # Handle special cases
+            if [ "$plugin" = "LagFixer" ]; then
+              if echo "$logs" | grep -qi "LagFixer\|⚡.*lag"; then
+                echo "✓ $plugin loaded"
+              else
+                echo "✗ $plugin NOT found in logs"
+                failed=1
+              fi
+            elif [ "$plugin" = "FastAsyncWorldEdit" ]; then
+              if echo "$logs" | grep -qi "FastAsyncWorldEdit\|FAWE"; then
+                echo "✓ $plugin loaded"
+              else
+                echo "✗ $plugin NOT found in logs"
+                failed=1
+              fi
+            elif [ "$plugin" = "QuickShop" ]; then
+              if echo "$logs" | grep -qi "QuickShop\|Hikari"; then
+                echo "✓ $plugin loaded"
+              else
+                echo "✗ $plugin NOT found in logs"
+                failed=1
+              fi
+            elif echo "$logs" | grep -qi "\[$plugin\]"; then
               echo "✓ $plugin loaded"
             else
               echo "✗ $plugin NOT found in logs"
@@ -171,55 +236,62 @@ jobs:
           echo ""
           echo "All expected plugins loaded successfully!"
 
-      - name: Check server health
+      - name: Test server health via RCON
         run: |
-          docker exec test-server mc-health || {
-            echo "Health check failed"
-            docker logs test-server
+          echo "Testing server health..."
+
+          # Check server responds to commands
+          result=$(mcrcon -H 127.0.0.1 -P 25575 -p testpassword "version" 2>&1)
+          if echo "$result" | grep -qi "paper\|minecraft"; then
+            echo "✓ Server version: $result"
+          else
+            echo "✗ Version command failed"
             exit 1
-          }
+          fi
+
+          # Check TPS
+          result=$(mcrcon -H 127.0.0.1 -P 25575 -p testpassword "tps" 2>&1)
+          echo "Server TPS: $result"
 
       - name: Test Economy setup
         run: |
           echo "Testing Economy configuration..."
-
-          # Check if Vault detected economy
           logs=$(docker logs test-server 2>&1)
 
-          if echo "$logs" | grep -qi "Vault.*Economy"; then
+          if echo "$logs" | grep -qi "Vault.*Economy\|Economy.*hooked"; then
             echo "✓ Vault economy integration detected"
           fi
 
-          if echo "$logs" | grep -qi "Essentials.*economy"; then
+          if echo "$logs" | grep -qi "Essentials.*economy\|EssentialsX.*economy"; then
             echo "✓ Essentials economy enabled"
           fi
 
-          # Verify worth.yml was loaded
-          if echo "$logs" | grep -qi "worth"; then
-            echo "✓ Worth configuration detected"
-          fi
-
-      - name: Test Citizens and Shopkeepers
+      - name: Test NPC and Shop plugins
         run: |
-          echo "Testing NPC plugins..."
+          echo "Testing NPC and Shop plugins..."
           logs=$(docker logs test-server 2>&1)
 
-          # Check Citizens
-          if echo "$logs" | grep -q "Citizens.*Enabling"; then
-            echo "✓ Citizens enabled"
-            if echo "$logs" | grep -q "Citizens.*libraries"; then
-              echo "✓ Citizens libraries loaded"
-            fi
+          # Check FancyNpcs
+          if echo "$logs" | grep -qi "FancyNpcs.*Enabling\|FancyNpcs.*enabled"; then
+            echo "✓ FancyNpcs enabled"
           else
-            echo "✗ Citizens not enabled"
+            echo "✗ FancyNpcs not enabled"
             exit 1
           fi
 
           # Check Shopkeepers
-          if echo "$logs" | grep -q "Shopkeepers.*Enabling"; then
+          if echo "$logs" | grep -qi "Shopkeepers.*Enabling\|Shopkeepers.*enabled"; then
             echo "✓ Shopkeepers enabled"
           else
             echo "✗ Shopkeepers not enabled"
+            exit 1
+          fi
+
+          # Check QuickShop
+          if echo "$logs" | grep -qi "QuickShop.*Enabling\|QuickShop.*enabled\|Hikari"; then
+            echo "✓ QuickShop-Hikari enabled"
+          else
+            echo "✗ QuickShop-Hikari not enabled"
             exit 1
           fi
 
@@ -228,16 +300,11 @@ jobs:
           echo "Testing PlotSquared..."
           logs=$(docker logs test-server 2>&1)
 
-          if echo "$logs" | grep -q "PlotSquared.*Enabling"; then
+          if echo "$logs" | grep -qi "PlotSquared.*Enabling\|PlotSquared.*enabled"; then
             echo "✓ PlotSquared enabled"
           else
             echo "✗ PlotSquared not enabled"
             exit 1
-          fi
-
-          # Check for economy hook
-          if echo "$logs" | grep -qi "PlotSquared.*economy\|PlotSquared.*Vault"; then
-            echo "✓ PlotSquared economy integration"
           fi
 
       - name: Test BlueMap
@@ -245,7 +312,7 @@ jobs:
           echo "Testing BlueMap..."
           logs=$(docker logs test-server 2>&1)
 
-          if echo "$logs" | grep -q "BlueMap.*Enabling"; then
+          if echo "$logs" | grep -qi "BlueMap.*Enabling\|BlueMap.*enabled"; then
             echo "✓ BlueMap enabled"
           else
             echo "✗ BlueMap not enabled"
@@ -253,9 +320,33 @@ jobs:
           fi
 
           # Check if web server started
-          if echo "$logs" | grep -qi "BlueMap.*webserver\|BlueMap.*:8100"; then
-            echo "✓ BlueMap web server"
+          if echo "$logs" | grep -qi "BlueMap.*webserver\|Webserver.*started\|:8100"; then
+            echo "✓ BlueMap web server started"
           fi
+
+      - name: Test Multiverse worlds
+        run: |
+          echo "Testing Multiverse..."
+
+          # List worlds via RCON
+          result=$(mcrcon -H 127.0.0.1 -P 25575 -p testpassword "mv list" 2>&1)
+          echo "Multiverse worlds: $result"
+
+          if echo "$result" | grep -qi "world"; then
+            echo "✓ Multiverse listing worlds"
+          fi
+
+      - name: Test autopause script syntax
+        run: |
+          echo "Validating autopause script..."
+          docker run --rm --entrypoint="" lumo-server:test bash -n /autopause.sh
+          echo "✓ autopause.sh syntax valid"
+
+      - name: Test init-worlds script syntax
+        run: |
+          echo "Validating init-worlds script..."
+          docker run --rm --entrypoint="" lumo-server:test bash -n /init-worlds.sh
+          echo "✓ init-worlds.sh syntax valid"
 
       - name: Generate test report
         if: always()
@@ -265,24 +356,40 @@ jobs:
           echo "========================================"
           echo ""
 
-          logs=$(docker logs test-server 2>&1)
+          logs=$(docker logs test-server 2>&1) || true
 
           echo "Plugin Status:"
           echo "--------------"
           plugins=(
             "Multiverse-Core" "Multiverse-Portals" "Multiverse-NetherPortals"
-            "BlueMap" "WorldEdit" "WorldGuard" "ViaVersion" "ViaBackwards"
+            "BlueMap" "FastAsyncWorldEdit" "WorldGuard" "ViaVersion" "ViaBackwards"
             "voicechat" "Chunker" "LagFixer" "CoreProtect" "SmoothTimber"
-            "PlotSquared" "LuckPerms" "Essentials" "Vault" "Citizens"
-            "Shopkeepers" "VoidWorld" "DeathChest"
+            "PlotSquared" "LuckPerms" "Essentials" "Vault" "FancyNpcs"
+            "Shopkeepers" "QuickShop" "VoidWorld" "DeathChest"
           )
 
           loaded=0
           failed=0
           for plugin in "${plugins[@]}"; do
-            # Handle special cases like LagFixer which uses emoji prefix [⚡] instead of [LagFixer]
+            # Handle special cases
             if [ "$plugin" = "LagFixer" ]; then
-              if echo "$logs" | grep -q "LagFixer errors\|LagFixer v"; then
+              if echo "$logs" | grep -qi "LagFixer\|⚡"; then
+                echo "✓ $plugin"
+                loaded=$((loaded + 1))
+              else
+                echo "✗ $plugin"
+                failed=$((failed + 1))
+              fi
+            elif [ "$plugin" = "FastAsyncWorldEdit" ]; then
+              if echo "$logs" | grep -qi "FastAsyncWorldEdit\|FAWE"; then
+                echo "✓ $plugin"
+                loaded=$((loaded + 1))
+              else
+                echo "✗ $plugin"
+                failed=$((failed + 1))
+              fi
+            elif [ "$plugin" = "QuickShop" ]; then
+              if echo "$logs" | grep -qi "QuickShop\|Hikari"; then
                 echo "✓ $plugin"
                 loaded=$((loaded + 1))
               else
@@ -302,14 +409,14 @@ jobs:
           echo "Loaded: $loaded | Failed: $failed"
           echo ""
 
-          # Check for errors
-          error_count=$(echo "$logs" | grep -ci "error\|exception\|failed" || true)
+          # Check for critical errors
+          error_count=$(echo "$logs" | grep -ci "error\|exception" | head -1 || echo "0")
           echo "Errors/Exceptions in logs: $error_count"
 
-          if [ "$error_count" -gt 5 ]; then
+          if [ "$error_count" -gt 10 ]; then
             echo ""
             echo "Notable errors:"
-            echo "$logs" | grep -i "error\|exception\|failed" | head -10
+            echo "$logs" | grep -i "error\|exception" | grep -v "No errors" | head -10
           fi
 
           echo ""
