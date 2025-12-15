@@ -38,6 +38,16 @@ else
     done
 fi
 
+# =============================================================================
+# Configure Chunker auto-run based on ENABLE_CHUNKER
+# =============================================================================
+if [ "${ENABLE_CHUNKER}" = "false" ]; then
+    log "Chunker auto-run disabled via ENABLE_CHUNKER=false"
+    if [ -f "/data/plugins/Chunker/settings.yml" ]; then
+        sed -i 's/auto_run: true/auto_run: false/g' /data/plugins/Chunker/settings.yml
+    fi
+fi
+
 if [ ! -d "/data/world/datapacks" ]; then
     mkdir -p /data/world/datapacks
 fi
