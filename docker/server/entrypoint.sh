@@ -77,16 +77,86 @@ rcon.password=${RCON_PASSWORD}
 rcon.port=${RCON_PORT}
 server-port=${MC_SERVER_PORT}
 level-name=world
-level-type=minecraft\:normal
-max-tick-time=-1
+level-type=minecraft:normal
+max-tick-time=${MAX_TICK_TIME}
 enable-status=true
-allow-flight=true
+allow-flight=${ALLOW_FLIGHT}
+player-idle-timeout=${PLAYER_IDLE_TIMEOUT}
+spawn-animals=${SPAWN_ANIMALS}
+spawn-monsters=${SPAWN_MONSTERS}
+spawn-npcs=${SPAWN_NPCS}
+network-compression-threshold=${NETWORK_COMPRESSION_THRESHOLD}
+entity-broadcast-range-percentage=${ENTITY_BROADCAST_RANGE}
 EOF
 
 # =============================================================================
 # Accept EULA
 # =============================================================================
 echo "eula=true" > /data/eula.txt
+
+# =============================================================================
+# Configure ops.json (server operators)
+# =============================================================================
+if [ -n "$OPS" ]; then
+    log "Configuring server operators..."
+    echo "[" > /data/ops.json
+    first=true
+    IFS=',' read -ra OP_LIST <<< "$OPS"
+    for op in "${OP_LIST[@]}"; do
+        op=$(echo "$op" | xargs)  # trim whitespace
+        if [ -n "$op" ]; then
+            if [ "$first" = true ]; then
+                first=false
+            else
+                echo "," >> /data/ops.json
+            fi
+            # Format: username or username:level (default level 4)
+            if [[ "$op" == *":"* ]]; then
+                username="${op%%:*}"
+                level="${op##*:}"
+            else
+                username="$op"
+                level="4"
+            fi
+            cat >> /data/ops.json <<OPENTRY
+  {
+    "name": "$username",
+    "level": $level,
+    "bypassesPlayerLimit": true
+  }
+OPENTRY
+        fi
+    done
+    echo "]" >> /data/ops.json
+    log "Added ${#OP_LIST[@]} operator(s)"
+fi
+
+# =============================================================================
+# Configure whitelist.json
+# =============================================================================
+if [ -n "$WHITELIST_USERS" ]; then
+    log "Configuring whitelist..."
+    echo "[" > /data/whitelist.json
+    first=true
+    IFS=',' read -ra WL_LIST <<< "$WHITELIST_USERS"
+    for user in "${WL_LIST[@]}"; do
+        user=$(echo "$user" | xargs)  # trim whitespace
+        if [ -n "$user" ]; then
+            if [ "$first" = true ]; then
+                first=false
+            else
+                echo "," >> /data/whitelist.json
+            fi
+            cat >> /data/whitelist.json <<WLENTRY
+  {
+    "name": "$user"
+  }
+WLENTRY
+        fi
+    done
+    echo "]" >> /data/whitelist.json
+    log "Added ${#WL_LIST[@]} whitelisted user(s)"
+fi
 
 # =============================================================================
 # JVM Arguments (Aikar's flags)
