@@ -118,7 +118,7 @@ RUN addgroup -g 1000 minecraft && \
     adduser -u 1000 -G minecraft -h /data -D minecraft
 
 # Install minimal runtime dependencies
-RUN apk add --no-cache bash tini netcat-openbsd iproute2 procps
+RUN apk add --no-cache bash tini netcat-openbsd iproute2 procps socat python3
 
 WORKDIR /server
 
@@ -140,6 +140,7 @@ COPY --chown=minecraft:minecraft config/plugins/PlotSquared/ /server/plugins/Plo
 COPY --chmod=755 docker/server/entrypoint.sh /entrypoint.sh
 COPY --chmod=755 docker/server/init-worlds.sh /init-worlds.sh
 COPY --chmod=755 docker/server/autopause.sh /autopause.sh
+COPY --chmod=755 docker/server/wake-listener.py /wake-listener.py
 
 # Set ownership
 RUN chown -R minecraft:minecraft /server

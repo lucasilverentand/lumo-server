@@ -48,6 +48,15 @@ cp /server/datapacks/* /data/world/datapacks/ 2>/dev/null || true
 # Generate server.properties
 # =============================================================================
 log "Generating server.properties..."
+
+# When autopause is enabled, server listens on internal port 25566
+# (proxy handles external 25565). Otherwise, listen directly on 25565.
+if [ "${ENABLE_AUTOPAUSE}" = "true" ]; then
+    MC_SERVER_PORT=25566
+else
+    MC_SERVER_PORT=25565
+fi
+
 cat > /data/server.properties <<EOF
 # Lumo Server Configuration
 motd=${MOTD}
@@ -66,7 +75,7 @@ enforce-whitelist=${ENFORCE_WHITELIST}
 enable-rcon=${ENABLE_RCON}
 rcon.password=${RCON_PASSWORD}
 rcon.port=${RCON_PORT}
-server-port=25565
+server-port=${MC_SERVER_PORT}
 level-name=world
 level-type=minecraft\:normal
 max-tick-time=-1
