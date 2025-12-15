@@ -27,7 +27,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  MC_VERSION: ${{ inputs.mc_version || '1.21.4' }}
+  MC_VERSION: ${{ inputs.mc_version || '1.21.10' }}
 
 jobs:
   build:

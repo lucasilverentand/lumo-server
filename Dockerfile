@@ -1,7 +1,7 @@
 # Lumo Minecraft Server - Built from scratch
 # Minimal image with Paper server and plugins
 
-ARG MC_VERSION=1.21.4
+ARG MC_VERSION=1.21.10
 ARG JAVA_VERSION=21
 
 # =============================================================================
