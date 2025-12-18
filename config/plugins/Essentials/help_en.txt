@@ -1,0 +1,84 @@
+# Lumo Server Help Guide
+
+## Basic Commands
+/spawn - Teleport to hub spawn
+/sethome [name] - Set a home location (up to 3)
+/home [name] - Teleport to your home
+/delhome [name] - Delete a home location
+/kit starter - Get starter kit (one-time only)
+/help [page] - Show this help menu
+
+## Economy Commands
+/balance - Check your money (also: /bal, /money)
+/sell hand - Sell item in your hand
+/sell all - Sell all sellable items in inventory
+/sell blocks - Sell all blocks in inventory
+/pay <player> <amount> - Send money to another player
+/balancetop - See richest players (also: /baltop)
+
+## Plot Commands (lumo_city world)
+/plot auto - Claim a random free plot ($500)
+/plot claim - Claim the plot you're standing in
+/plot home - Teleport to your plot
+/plot add <player> - Add a friend to your plot
+/plot remove <player> - Remove a friend from plot
+/plot trust <player> - Trust a player (full permissions)
+/plot clear - Clear your plot
+/plot delete - Delete/unclaim your plot
+
+## World Information
+hub - Spawn point with portals to all worlds
+lumo_wilds - Survival hard mode with Terralith terrain
+lumo_city - Creative plots for building
+lumo_wilds_nether - Nether dimension (linked to wilds)
+lumo_wilds_end - End dimension (linked to wilds)
+
+## Social Commands
+/msg <player> <message> - Private message
+/r <message> - Reply to last message
+/mail send <player> <message> - Send offline mail
+/mail read - Read your mail
+/mail clear - Clear your mailbox
+
+## Useful Commands
+/tpa <player> - Request to teleport to player
+/tpahere <player> - Request player teleport to you
+/tpaccept - Accept teleport request
+/tpdeny - Deny teleport request
+/back - Return to previous location
+/suicide - Respawn at spawn
+
+## Earning Money Guide
+Mining ores is the best way to earn money:
+- Diamond: $350 each
+- Emerald: $210 each
+- Gold Ingot: $24 each
+- Iron Ingot: $14 each
+- Netherite Ingot: $3,500 each
+
+Rare mob drops also sell well:
+- Wither Skull: $1,750
+- Nether Star: $10,500
+- Ender Pearl: $35
+- Blaze Rod: $52
+
+Use /sell hand or /sell all to sell items!
+
+## Plot Information
+Plots in lumo_city cost $500 to claim.
+You can build in creative mode on your plot.
+Use /plot auto to get a random free plot.
+Default plot size is configurable by admins.
+
+## Tips for New Players
+1. Get your starter kit with /kit starter
+2. Set a home in lumo_wilds with /sethome wild
+3. Mine ores to earn money quickly
+4. Buy a plot in lumo_city when you have $500
+5. Use /spawn to return to hub anytime
+6. Explore Terralith terrain in lumo_wilds
+7. Check BlueMap to see the world online
+
+## Need Help?
+Ask in chat! Our community is friendly and helpful.
+For issues, contact server staff/admins.

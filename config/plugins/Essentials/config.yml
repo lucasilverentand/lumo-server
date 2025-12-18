@@ -113,14 +113,31 @@ kits:
   starter:
     delay: 0
     items:
-      - 272 1 # Stone sword
-      - 274 1 # Stone pickaxe
-      - 275 1 # Stone axe
-      - 260 16 # Apples
-      - 50 32 # Torches
+      - stone_sword 1
+      - stone_pickaxe 1
+      - stone_axe 1
+      - stone_shovel 1
+      - apple 16
+      - torch 32
+      - cooked_beef 16
+      - oak_planks 64
+      - cobblestone 64
 
 # Enable per-world chat
 per-world-chat: false
+
+# Custom text file to show to new players on first join
+# This file will be sent to players who join for the first time
+custom-join-message: true
+
+# Auto-give starter kit on first join
+newbies:
+  # Automatically give kit on first join
+  kit: starter
+  # Show custom.txt on first join
+  spawnpoint: hub
+  # Announce new player joins
+  announce-format: '&6Welcome {DISPLAYNAME}&6 to the server!'
 
 # Debug mode
 debug: false

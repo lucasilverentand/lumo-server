@@ -1,0 +1,41 @@
+&3&m----------------------------------------------------
+&6&lWelcome to Lumo Server!
+&3&m----------------------------------------------------
+
+&eHey {PLAYER}, welcome to your adventure!
+
+&b&lServer Features:
+&7- &3Multiple Worlds&7: Explore hub, wilds, nether, end & city
+&7- &3Economy System&7: Earn money, buy plots, trade with players
+&7- &3Claim Plots&7: Build in creative mode in lumo_city
+&7- &3Voice Chat&7: Communicate with nearby players
+&7- &3BlueMap&7: View the world at &nhttp://your-server:8100
+
+&b&lWorlds Guide:
+&7- &ehub&7: Your spawn point - find portals to all worlds
+&7- &elumo_wilds&7: Survival hard mode with Terralith terrain
+&7- &elumo_city&7: Creative plots - claim with &a/plot auto
+&7- &elumo_wilds_nether&7 & &elumo_wilds_end&7: Linked dimensions
+
+&b&lEconomy Tutorial:
+&7- Starting Balance: &a$1000
+&7- Earn Money: Mine ores, sell items with &a/sell hand
+&7- Check Balance: &a/balance &7or &a/bal
+&7- Buy Plots: Go to lumo_city and use &a/plot auto &7($500)
+&7- Best Prices: Ores = high value, food = low value
+&7- Tip: Visit NPC merchants for better prices than /sell
+
+&b&lUseful Commands:
+&7- &a/spawn &7- Return to hub
+&7- &a/sethome [name] &7- Set a home (up to 3)
+&7- &a/home [name] &7- Teleport to your home
+&7- &a/kit starter &7- Get your starter kit (one-time)
+&7- &a/sell hand &7- Sell item in hand
+&7- &a/plot auto &7- Claim a plot in lumo_city
+
+&b&lNeed Help?
+&7Ask in chat or visit signs in the hub for more info!
+
+&3&m----------------------------------------------------
+&6Enjoy your time on Lumo Server!
+&3&m----------------------------------------------------

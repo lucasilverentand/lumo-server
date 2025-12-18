@@ -1,0 +1,17 @@
+&3&m----------------------------------------
+&6&lLumo Server &7- &eYour Adventure Awaits!
+&3&m----------------------------------------
+
+&b&lQuick Commands:
+&a/spawn &7- Return to hub
+&a/kit starter &7- Get starter kit (first-time)
+&a/sethome &7- Save your location
+&a/home &7- Teleport home
+&a/balance &7- Check your money
+&a/sell hand &7- Sell items for cash
+
+&b&lWorlds:
+&eHub &7| &eWilds (Survival) &7| &eCity (Plots)
+
+&7Type &a/help &7for more commands!
+&3&m----------------------------------------
