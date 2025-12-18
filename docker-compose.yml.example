@@ -1,0 +1,32 @@
+services:
+  minecraft:
+    build: .
+    container_name: lumo-server
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      - "25565:25565/tcp"  # Minecraft
+      - "25575:25575/tcp"  # RCON
+      - "8100:8100/tcp"    # BlueMap
+      - "24454:24454/udp"  # Simple Voice Chat
+    volumes:
+      - ./data:/data
+    environment:
+      - EULA=true
+      - MEMORY=4G
+      - MAX_PLAYERS=20
+      - MOTD=Welcome to the Lumo Universe!
+      - DIFFICULTY=normal
+      - GAMEMODE=survival
+      - ONLINE_MODE=true
+      - VIEW_DISTANCE=12
+      - SIMULATION_DISTANCE=10
+      - ENABLE_AUTOPAUSE=true
+      - AUTOPAUSE_TIMEOUT=10
+      - RCON_PASSWORD=${RCON_PASSWORD:-minecraft}
+    stdin_open: true
+    tty: true
