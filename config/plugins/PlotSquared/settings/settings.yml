@@ -7,11 +7,11 @@ economy:
   # Default prices (can be overridden per-world in worlds.yml)
   prices:
     # Price to claim a plot
-    claim: 15000
+    claim: 7500
     # Price to merge plots together
-    merge: 10000
+    merge: 5000
     # How much you get back when selling a plot
-    sell: 7500
+    sell: 3750
 
 # Plots configuration
 plots:
