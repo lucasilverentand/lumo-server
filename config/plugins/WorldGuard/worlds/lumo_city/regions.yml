@@ -1,0 +1,60 @@
+# WorldGuard regions for lumo_city
+# PlotSquared plots world - peaceful difficulty, plot-based protection
+
+regions:
+  # Global settings for plot world
+  __global__:
+    members: {}
+    owners: {}
+    flags:
+      # Disable explosions
+      block-tnt: deny
+      creeper-explosion: deny
+      wither-damage: deny
+      other-explosion: deny
+
+      # Disable griefing
+      mob-griefing: deny
+      enderman-grief: deny
+
+      # Disable PvP (peaceful city)
+      pvp: deny
+
+      # Disable fire spread
+      fire-spread: deny
+      lava-fire: deny
+
+      # Disable mob spawning (peaceful)
+      mob-spawning: deny
+
+      # PlotSquared handles plot protection, but this prevents griefing in roads/unclaimed areas
+
+      # Send message on entry
+      greeting: "&bLumo City &7- Claim a plot and build your dream! &e/plot auto"
+    type: global
+    priority: 0
+
+  # City spawn area
+  spawn:
+    min: {x: -50.0, y: -64.0, z: -50.0}
+    max: {x: 50.0, y: 320.0, z: 50.0}
+    members: {}
+    owners:
+      groups:
+        - admin
+        - moderator
+    flags:
+      # Protect spawn from building
+      build: deny
+      block-break: deny
+      block-place: deny
+
+      # Reinforce peaceful settings
+      pvp: deny
+      mob-spawning: deny
+
+      # Send spawn message
+      greeting: "&6City Spawn &7- Use &e/plot auto &7to claim your first plot!"
+      farewell: "&7Explore the city and claim your plot!"
+    type: cuboid
+    priority: 10

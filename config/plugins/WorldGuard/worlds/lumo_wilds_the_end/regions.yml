@@ -1,0 +1,60 @@
+# WorldGuard regions for lumo_wilds_the_end
+# End dimension - spawn protection and anti-grief globals
+
+regions:
+  # Global anti-grief protection
+  __global__:
+    members: {}
+    owners: {}
+    flags:
+      # Prevent major griefing
+      block-tnt: deny
+      wither-damage: deny
+
+      # Prevent enderman griefing (they steal blocks)
+      enderman-grief: deny
+      mob-griefing: deny
+
+      # No creepers in end
+      creeper-explosion: deny
+
+      # PvP allowed
+      pvp: allow
+
+      # Send message on entry
+      greeting: "&5The End &7- Dragon's domain. Prepare for the ultimate challenge!"
+    type: global
+    priority: 0
+
+  # End spawn protection area (main island spawn)
+  spawn:
+    min: {x: -50.0, y: 0.0, z: -50.0}
+    max: {x: 50.0, y: 256.0, z: 50.0}
+    members: {}
+    owners:
+      groups:
+        - admin
+        - moderator
+    flags:
+      # Protect spawn area
+      build: deny
+      block-break: deny
+      block-place: deny
+
+      # Disable PvP in spawn
+      pvp: deny
+
+      # Prevent explosions
+      block-tnt: deny
+      creeper-explosion: deny
+      wither-damage: deny
+      other-explosion: deny
+
+      # Prevent enderman griefing in spawn
+      enderman-grief: deny
+
+      # Send spawn message
+      greeting: "&dEnd Spawn &7- Safe zone. Exit platform to face the dragon!"
+      farewell: "&7Leaving safe zone - &5The dragon awaits!"
+    type: cuboid
+    priority: 10
