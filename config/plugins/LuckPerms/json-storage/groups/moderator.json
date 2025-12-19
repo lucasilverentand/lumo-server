@@ -1,0 +1,48 @@
+{
+  "name": "moderator",
+  "permissions": [
+    "essentials.ban",
+    "essentials.unban",
+    "essentials.ban.offline",
+    "essentials.tempban",
+    "essentials.kick",
+    "essentials.mute",
+    "essentials.unmute",
+    "essentials.socialspy",
+    "essentials.seen",
+    "essentials.teleport.cooldown.bypass",
+    "essentials.teleport.timer.bypass",
+    "essentials.tp",
+    "essentials.tphere",
+    "essentials.tppos",
+    "essentials.back.ondeath",
+    "essentials.invsee",
+    "essentials.clearinventory.others",
+    "essentials.gamemode.creative",
+    "essentials.gamemode.survival",
+    "essentials.gamemode.adventure",
+    "essentials.gamemode.spectator",
+    "essentials.gamemode.others",
+    "essentials.fly",
+    "essentials.fly.others",
+    "essentials.god",
+    "essentials.god.others",
+    "essentials.vanish",
+    "essentials.vanish.others",
+    "essentials.broadcast",
+    "essentials.chat.color",
+    "essentials.chat.format",
+    "worldguard.notify",
+    "worldguard.region.info.*",
+    "bluemap.status",
+    "bluemap.reload",
+    "bluemap.debug"
+  ],
+  "parents": [
+    "builder"
+  ],
+  "meta": {
+    "prefix": "&6[Mod] &6"
+  },
+  "weight": 20
+}
