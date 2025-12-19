@@ -1,0 +1,63 @@
+# WorldGuard regions for lumo_wilds survival world
+# Survival hard mode - only spawn protection and anti-grief globals
+
+regions:
+  # Global anti-grief protection
+  __global__:
+    members: {}
+    owners: {}
+    flags:
+      # Prevent major griefing
+      block-tnt: deny
+      wither-damage: deny
+
+      # Allow creepers for survival feel (can be changed to deny)
+      creeper-explosion: allow
+
+      # Prevent other mob griefing
+      mob-griefing: deny
+      enderman-grief: deny
+
+      # Allow fire spread for realistic survival
+      fire-spread: allow
+
+      # PvP allowed in survival
+      pvp: allow
+
+      # Send message on entry
+      greeting: "&cLumo Wilds &7- Survival Hard Mode. Build, explore, survive!"
+    type: global
+    priority: 0
+
+  # Spawn protection area
+  spawn:
+    min: {x: -100.0, y: -64.0, z: -100.0}
+    max: {x: 100.0, y: 320.0, z: 100.0}
+    members: {}
+    owners:
+      groups:
+        - admin
+        - moderator
+    flags:
+      # Protect spawn area from building
+      build: deny
+      block-break: deny
+      block-place: deny
+
+      # Disable PvP in spawn
+      pvp: deny
+
+      # Prevent explosions in spawn
+      block-tnt: deny
+      creeper-explosion: deny
+      wither-damage: deny
+      other-explosion: deny
+
+      # Prevent fire in spawn
+      fire-spread: deny
+
+      # Send spawn message
+      greeting: "&aWilds Spawn &7- Safe zone. Leave this area to build and explore!"
+      farewell: "&7Leaving spawn - &cPvP and building enabled!"
+    type: cuboid
+    priority: 10

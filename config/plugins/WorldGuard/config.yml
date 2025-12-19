@@ -1,0 +1,57 @@
+# WorldGuard Configuration
+# See https://worldguard.enginehub.org/en/latest/config/ for full documentation
+
+# Protection settings
+protection:
+  # Mob griefing
+  disable-creeper-explosions: false
+  disable-wither-explosions: false
+  disable-enderman-griefing: true
+
+  # Fire
+  disable-fire-spread: false
+  disable-lava-fire-spread: true
+
+  # TNT
+  disable-tnt-explosion: false
+
+# Gameplay settings
+gameplay:
+  disable-health-regain-for-smelting: false
+
+# Natural world changes
+dynamics:
+  disable-leaf-decay: false
+  disable-grass-growth: false
+  disable-crop-growth: false
+  disable-ice-melting: false
+  disable-snow-melting: false
+  disable-snow-formation: false
+  disable-ice-formation: false
+  disable-mushroom-spread: false
+  disable-vine-growth: false
+
+# Region settings
+regions:
+  use-scheduler: true
+  use-paper-events: true
+  enable: true
+  wand: minecraft:wooden_axe
+  max-claim-volume: 30000
+  claim-only-inside-existing-regions: false
+
+# Blacklist logging
+blacklist:
+  use-scheduler: true
+
+# Performance
+performance:
+  regions-use-scheduler: true
+
+# Reporting
+auto-invincibility: false
+auto-invincibility-group: false
+auto-no-cheats: false
+
+# Permissions
+op-permissions: true
