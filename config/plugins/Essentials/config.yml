@@ -14,8 +14,8 @@ starting-balance: 1000
 # Set to -1 for unlimited.
 max-money: 10000000000000
 
-# The minimum amount of money a player can have (can be negative for debt).
-min-money: -10000
+# The minimum amount of money a player can have (set to 0 to prevent debt).
+min-money: 0
 
 # Currency symbol
 currency-symbol: '$'
@@ -129,11 +129,11 @@ motd:
 # +------------------------------------------------------+ #
 ############################################################
 
-# Kit delay in seconds (use 0 for one-time kits)
+# Kit delay in seconds (-1 = one-time only, 0 = no cooldown, >0 = cooldown in seconds)
 kits:
-  # Starter kit - given automatically to new players
+  # Starter kit - given automatically to new players (one-time only)
   starter:
-    delay: 0
+    delay: -1  # -1 means one-time only, cannot be claimed again
     items:
       # Tools
       - iron_sword 1

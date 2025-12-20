@@ -32,9 +32,10 @@ Shown to all players (including returning players) on login:
 ### Kits
 
 #### Starter Kit
-- **Delay**: 0 (one-time, auto-given to new players)
+- **Delay**: -1 (one-time only, cannot be claimed again)
 - **Contents**: Iron tools, food, building materials, utilities
-- **Command**: `/kit starter` (if they somehow lose items)
+- **Auto-given**: Automatically given to new players on first join
+- **Security**: Cannot be claimed multiple times to prevent abuse
 
 #### Tools Kit
 - **Delay**: 86400 seconds (24 hours)
@@ -48,7 +49,7 @@ Shown to all players (including returning players) on login:
 - **Currency Symbol**: $
 - **Currency Format**: #,##0.00 (shows cents)
 - **Max Money**: 10,000,000,000,000
-- **Min Money**: -10,000 (allows debt)
+- **Min Money**: 0 (debt disabled for security)
 
 Players can:
 - `/sell` - Sell items for money
@@ -88,7 +89,7 @@ Edit the `kits.starter.items` list in `config.yml`:
 ```yaml
 kits:
   starter:
-    delay: 0
+    delay: -1  # -1 = one-time only
     items:
       - item_name quantity
 ```
