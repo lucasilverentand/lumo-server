@@ -141,6 +141,7 @@ COPY --chmod=755 docker/server/entrypoint.sh /entrypoint.sh
 COPY --chmod=755 docker/server/init-worlds.sh /init-worlds.sh
 COPY --chmod=755 docker/server/autopause.sh /autopause.sh
 COPY --chmod=755 docker/server/wake-listener.py /wake-listener.py
+COPY --chmod=755 docker/server/mc-health /usr/local/bin/mc-health
 
 # Set ownership
 RUN chown -R minecraft:minecraft /server

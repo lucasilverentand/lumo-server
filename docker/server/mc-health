@@ -1,0 +1,18 @@
+#!/bin/bash
+# mc-health - Minecraft server health check script for Kubernetes
+# Uses RCON to verify the server is responsive
+
+set -e
+
+# Default values (can be overridden by environment variables)
+RCON_HOST="${RCON_HOST:-localhost}"
+RCON_PORT="${RCON_PORT:-25575}"
+RCON_PASSWORD="${RCON_PASSWORD:-minecraft}"
+
+# Execute RCON command to check if server is responsive
+# The 'list' command is a simple query that returns player count
+if mcrcon -H "$RCON_HOST" -P "$RCON_PORT" -p "$RCON_PASSWORD" "list" >/dev/null 2>&1; then
+    exit 0
+else
+    exit 1
+fi

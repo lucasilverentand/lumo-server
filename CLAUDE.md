@@ -89,3 +89,27 @@ Auto-created on first startup via init-worlds.sh:
 - **lumo_wilds**: Terralith terrain, survival hard, main gameplay
 - **lumo_wilds_nether/end**: Linked dimensions
 - **lumo_city**: PlotSquared plots, peaceful - building area
+
+## Health Checks
+
+The image includes a `mc-health` script for Kubernetes health checks:
+
+```yaml
+# Kubernetes readiness probe
+readinessProbe:
+  exec:
+    command: ["mc-health"]
+  initialDelaySeconds: 300
+  periodSeconds: 30
+  timeoutSeconds: 10
+
+# Kubernetes liveness probe
+livenessProbe:
+  exec:
+    command: ["mc-health"]
+  initialDelaySeconds: 300
+  periodSeconds: 60
+  timeoutSeconds: 10
+```
+
+The `mc-health` script uses RCON to verify the server is responsive. It respects the `RCON_HOST`, `RCON_PORT`, and `RCON_PASSWORD` environment variables (defaults: localhost, 25575, minecraft).
