@@ -21,18 +21,13 @@ Place signs near each portal with the following information:
 &b✦ &7Terralith terrain
 ```
 
-Commands to create:
-```
-/essentials:createholo LumoWildsInfo 0 64 0 &e&lLumo Wilds\n&7Survival Hard Mode
-```
-
 ### Lumo City Portal
 ```
 [Portal Sign 1]
 &6&l━━━━━━━━━━━━
 &b&lLumo City
-&7Creative plots
-&7Peaceful building area
+&7Survival building area
+&7Peaceful, no PvP
 &6&l━━━━━━━━━━━━
 
 [Portal Sign 2]
@@ -74,7 +69,7 @@ Place near spawn in hub:
 
 ### Spawn Platform
 1. Build a central spawn platform in the hub (coordinates: 0, 64, 0 recommended)
-2. Place a welcome hologram or sign above spawn point
+2. Place a welcome sign above spawn point
 3. Add directional signs pointing to each portal
 
 ### Information Board
@@ -99,7 +94,7 @@ Create a large wall with signs explaining:
 &b&lAvailable Worlds:
 &e• &bHub &7- You are here
 &e• &6Lumo Wilds &7- Survival hard
-&e• &aLumo City &7- Creative plots
+&e• &aLumo City &7- Survival plots, peaceful
 &e• &cNether &7- Accessed via portals
 &e• &5The End &7- Accessed via portals
 
