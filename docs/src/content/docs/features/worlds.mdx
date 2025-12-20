@@ -1,0 +1,366 @@
+---
+title: World Management
+description: Auto-created worlds and Multiverse integration
+---
+
+Lumo Server automatically creates 5 worlds on first startup using Multiverse and custom world generation configurations.
+
+## Auto-Created Worlds
+
+On first startup, the `init-worlds.sh` script creates these worlds via RCON commands:
+
+| World Name | Type | Difficulty | Gamemode | Purpose |
+|------------|------|------------|----------|---------|
+| `hub` | VoidWorld | Peaceful | Adventure | Spawn/portal hub |
+| `lumo_wilds` | Terralith | Hard | Survival | Main survival gameplay |
+| `lumo_wilds_nether` | Nether | Hard | Survival | Linked nether dimension |
+| `lumo_wilds_end` | End | Hard | Survival | Linked end dimension |
+| `lumo_city` | PlotSquared | Peaceful | Survival | Creative plots and building |
+
+## World Details
+
+### Hub (Spawn World)
+
+**Purpose:** Central hub for portals and server navigation
+
+**Configuration:**
+- Generator: VoidWorld (empty void)
+- Difficulty: Peaceful
+- Gamemode: Adventure (prevents breaking/placing)
+- No monsters, no animals
+
+**Use cases:**
+- Server spawn point
+- Portal room to other worlds
+- Info boards and rules
+- Event staging area
+
+**Teleport:**
+```
+/mv tp hub
+```
+
+### Lumo Wilds (Main Survival)
+
+**Purpose:** Primary survival world with beautiful terrain
+
+**Configuration:**
+- Generator: Terralith datapack
+- Difficulty: Hard
+- Gamemode: Survival
+- Custom terrain generation
+
+**Features:**
+- 100+ custom biomes from Terralith
+- Stunning landscape variety
+- Caves and Cliffs generation
+- WorldGuard protection available
+
+**Linked dimensions:**
+- Nether: `lumo_wilds_nether`
+- End: `lumo_wilds_end`
+
+**Teleport:**
+```
+/mv tp lumo_wilds
+```
+
+### Lumo Wilds Nether
+
+**Purpose:** Nether dimension for lumo_wilds
+
+**Configuration:**
+- Environment: Nether
+- Difficulty: Hard
+- Linked to lumo_wilds overworld
+
+**Features:**
+- Standard nether generation
+- Nether portals link to lumo_wilds
+- All nether mobs and resources
+
+**Teleport:**
+```
+/mv tp lumo_wilds_nether
+```
+
+### Lumo Wilds End
+
+**Purpose:** End dimension for lumo_wilds
+
+**Configuration:**
+- Environment: The End
+- Difficulty: Hard
+- Ender dragon fight
+- End cities and elytra
+
+**Features:**
+- Ender dragon boss fight
+- End cities
+- Shulkers and chorus plants
+
+**Teleport:**
+```
+/mv tp lumo_wilds_end
+```
+
+### Lumo City (Plot World)
+
+**Purpose:** Creative building with protected plots
+
+**Configuration:**
+- Generator: PlotSquared
+- Plot size: 32x32 blocks
+- Road width: 7 blocks
+- Difficulty: Peaceful
+- Gamemode: Survival (creative permissions via LuckPerms)
+
+**Features:**
+- Claim plots with `/plot claim`
+- Merge plots with `/plot merge`
+- Add friends with `/plot trust`
+- Plot comments and ratings
+
+**Teleport:**
+```
+/mv tp lumo_city
+```
+
+**Plot commands:**
+- `/plot claim` - Claim current plot
+- `/plot auto` - Auto-claim next available plot
+- `/plot home` - Teleport to your plot
+- `/plot merge` - Merge with adjacent plots (if owned)
+
+## World Creation Process
+
+The `init-worlds.sh` script runs on first startup:
+
+1. Waits for server to fully start
+2. Connects via RCON
+3. Executes Multiverse commands to create worlds
+4. Sets world properties (difficulty, gamemode, etc.)
+5. Installs Terralith datapack to lumo_wilds
+6. Links nether/end dimensions
+
+**Init script location:** `/init-worlds.sh`
+
+**View script:**
+```bash
+docker exec minecraft-server cat /init-worlds.sh
+```
+
+## Multiverse Commands
+
+### Teleporting
+
+```
+/mv tp <world>
+/mv tp <world> <player>
+```
+
+### List Worlds
+
+```
+/mvlist
+```
+
+### World Info
+
+```
+/mv info <world>
+```
+
+### Set Gamemode
+
+```
+/mv modify set gamemode <survival|creative|adventure> <world>
+```
+
+### Set Difficulty
+
+```
+/mv modify set difficulty <peaceful|easy|normal|hard> <world>
+```
+
+## Adding Custom Worlds
+
+### Via RCON
+
+```bash
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft \
+  "mv create myworld NORMAL"
+```
+
+### Common world types:
+- `NORMAL` - Standard overworld
+- `NETHER` - Nether dimension
+- `END` - End dimension
+- `FLAT` - Superflat world
+
+### With Custom Generator
+
+For PlotSquared:
+```bash
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft \
+  "mv create plotworld NORMAL -g PlotSquared"
+```
+
+For VoidWorld:
+```bash
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft \
+  "mv create voidworld NORMAL -g VoidWorld"
+```
+
+## Terralith Datapack
+
+The `lumo_wilds` world uses the Terralith datapack for enhanced terrain.
+
+**Features:**
+- 100+ new biomes
+- Improved cave generation
+- Better mountain ranges
+- Custom structures
+
+**Datapack location:** `/server/datapacks/`
+
+**Installed automatically** during world creation by init-worlds.sh.
+
+### Using Terralith in Other Worlds
+
+1. Create world normally
+2. Copy datapack:
+   ```bash
+   docker exec minecraft-server cp -r /server/datapacks/Terralith*.zip /data/myworld/datapacks/
+   ```
+3. Reload datapacks:
+   ```bash
+   docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "minecraft:reload"
+   ```
+
+## World Inventories
+
+**Multiverse-Inventories** keeps separate inventories per world group:
+
+- **Hub**: Separate inventory (adventure mode)
+- **Survival group** (lumo_wilds + nether + end): Shared inventory
+- **Lumo city**: Separate inventory
+
+This prevents creative items from flowing into survival.
+
+## World Borders
+
+Set world borders to limit exploration:
+
+```bash
+# Set 10,000 block radius border
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft \
+  "worldborder center 0 0"
+
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft \
+  "worldborder set 20000"
+```
+
+Do this in each world as needed.
+
+## World Backup
+
+The automated backup system includes all worlds by default.
+
+**Manual backup of specific world:**
+
+```bash
+docker exec minecraft-server sh -c 'tar -czf /backups/lumo_wilds-$(date +%Y%m%d).tar.gz /data/lumo_wilds'
+```
+
+## Deleting Worlds
+
+:::caution
+Deleting a world is permanent. Backup first!
+:::
+
+1. Remove from Multiverse:
+   ```bash
+   docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft \
+     "mv remove worldname"
+   ```
+
+2. Delete world folder:
+   ```bash
+   docker exec minecraft-server rm -rf /data/worldname
+   ```
+
+## Pre-Generating Chunks
+
+Use Chunker plugin to pre-generate world chunks:
+
+```bash
+# Pre-generate 5000 block radius
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft \
+  "chunker start lumo_wilds 5000"
+
+# Check progress
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft \
+  "chunker status"
+
+# Pause generation
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft \
+  "chunker pause lumo_wilds"
+```
+
+**Configured in:** `/data/plugins/Chunker/config.yml`
+
+## Troubleshooting
+
+### World Not Created
+
+**Check init-worlds logs:**
+```bash
+docker logs minecraft-server | grep -i "init-worlds"
+```
+
+**Common causes:**
+- RCON not ready (init-worlds waits up to 60s)
+- RCON password mismatch
+- Plugin conflict
+
+**Manual creation:**
+```bash
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft \
+  "mv create worldname NORMAL"
+```
+
+### Terralith Not Applied
+
+**Symptoms:** Standard terrain in lumo_wilds
+
+**Fix:**
+1. Delete lumo_wilds world
+2. Restart container (re-runs init-worlds.sh)
+
+### Can't Teleport Between Worlds
+
+**Check Multiverse is loaded:**
+```bash
+docker logs minecraft-server | grep -i multiverse
+```
+
+**Reload Multiverse:**
+```bash
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "mv reload"
+```
+
+### Inventory Sharing Issues
+
+**Check Multiverse-Inventories config:**
+```bash
+docker exec minecraft-server cat /data/plugins/Multiverse-Inventories/config.yml
+```
+
+Configure world groups as needed.
+
+## Next Steps
+
+- [Plugin Configuration](/lumo-server/configuration/plugins/) - Configure Multiverse and PlotSquared
+- [Reference: Plugins](/lumo-server/reference/plugins/) - Full plugin list
+- [Troubleshooting](/lumo-server/reference/troubleshooting/) - Common issues

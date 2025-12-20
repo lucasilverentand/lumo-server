@@ -1,0 +1,300 @@
+---
+title: Autopause
+description: Intelligent idle detection and JVM pausing to save resources
+---
+
+Lumo Server includes an intelligent autopause system that automatically pauses the JVM when no players are online, saving CPU and power while keeping memory allocated for instant wake-up.
+
+## How Autopause Works
+
+The autopause system uses a multi-component architecture:
+
+1. **autopause.sh**: Monitors player activity and chunk loading
+2. **wake-listener.py**: Intercepts connection attempts while paused
+3. **socat proxy**: Routes traffic through the wake listener when paused
+
+### Architecture
+
+#### Active State (Players Online)
+
+```
+External:25565 → socat proxy → localhost:25566 (Minecraft server)
+```
+
+#### Paused State (No Players)
+
+```
+External:25565 → wake-listener.py (shows "sleeping" message, triggers wake)
+```
+
+The Minecraft server process is paused with `SIGSTOP` - it's frozen in memory but uses no CPU.
+
+## Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_AUTOPAUSE` | `true` | Enable/disable autopause functionality |
+| `AUTOPAUSE_TIMEOUT` | `10` | Minutes of idle time before pausing |
+| `AUTOPAUSE_POLL_INTERVAL` | `30` | Seconds between activity checks |
+
+### Enable Autopause
+
+```bash
+docker run \
+  -e ENABLE_AUTOPAUSE=true \
+  -e AUTOPAUSE_TIMEOUT=15 \
+  ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+### Disable Autopause
+
+```bash
+docker run \
+  -e ENABLE_AUTOPAUSE=false \
+  ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+**When to disable:**
+- Running in Kubernetes (conflicts with liveness probes)
+- Need guaranteed 24/7 uptime
+- Running scheduled tasks or plugins that need continuous execution
+
+## What Counts as "Activity"
+
+The autopause system monitors:
+
+- **Player count**: Any players logged in
+- **Chunk loading**: Chunks being loaded (indicates plugin activity, hoppers, farms)
+
+If either indicates activity, the server stays active.
+
+## Pause/Wake Process
+
+### Going to Sleep
+
+1. No players online for `AUTOPAUSE_TIMEOUT` minutes
+2. No chunk loading activity detected
+3. autopause.sh sends `SIGSTOP` to Minecraft process
+4. JVM freezes (no CPU usage, memory retained)
+5. socat proxy redirects port 25565 to wake-listener.py
+
+### Waking Up
+
+1. Player attempts to connect
+2. wake-listener.py receives connection
+3. Shows "Server is sleeping, waking up..." message
+4. Sends `SIGCONT` to Minecraft process
+5. Server resumes within 1-2 seconds
+6. Player connects normally (may need to retry connection)
+
+## Player Experience
+
+### Connecting to Sleeping Server
+
+When a player connects to a paused server:
+
+1. Connection attempt shows: **"Server is sleeping, waking up..."**
+2. Connection times out (server waking)
+3. Player retries connection
+4. Server is now active, connection succeeds
+
+**Tip for players:** If you see "Server is sleeping", wait 5 seconds and reconnect.
+
+## Resource Savings
+
+### Active Server
+- CPU: 50-200% (2-4 cores)
+- Memory: 4GB (as configured)
+- Power: ~100-200W
+
+### Paused Server
+- CPU: 0% (fully paused)
+- Memory: 4GB (retained for instant wake)
+- Power: ~5-10W (baseline only)
+
+**Savings:** ~95% CPU, ~95% power, instant wake-up
+
+## Port Proxy Details
+
+The entrypoint.sh sets up port proxying:
+
+```bash
+# Active state: Route to Minecraft server
+socat TCP-LISTEN:25565,fork,reuseaddr TCP:localhost:25566
+
+# Paused state: Route to wake listener
+# (autopause.sh switches this automatically)
+```
+
+Minecraft server runs on port 25566 internally, proxy exposes it on 25565.
+
+## Monitoring Autopause
+
+### Check if Server is Paused
+
+```bash
+# Check process state
+docker exec minecraft-server ps aux | grep java
+```
+
+Look for `T` in the state column (means stopped/paused).
+
+### View Autopause Logs
+
+```bash
+docker logs minecraft-server | grep -i autopause
+```
+
+Sample logs:
+```
+[AUTOPAUSE] No activity detected, pausing server...
+[AUTOPAUSE] Server paused (PID 123)
+[WAKE] Connection received, waking server...
+[AUTOPAUSE] Server resumed
+```
+
+### Test Autopause
+
+1. Start server with short timeout:
+   ```bash
+   docker run -e AUTOPAUSE_TIMEOUT=1 -e ENABLE_AUTOPAUSE=true ...
+   ```
+
+2. Wait 1 minute with no players
+
+3. Check if paused:
+   ```bash
+   docker exec minecraft-server ps aux | grep java
+   ```
+
+4. Try to connect - you should see "Server is sleeping" message
+
+## Compatibility
+
+### Works With
+
+- Docker / Docker Compose
+- Single-container deployments
+- Autopause-aware clients (auto-retry connection)
+
+### Conflicts With
+
+- **Kubernetes liveness/readiness probes**: Probes fail while paused, pod gets killed
+- **Always-on monitoring**: Services that expect 24/7 response
+- **Scheduled plugins**: Plugins with cron jobs won't run while paused
+
+## Kubernetes Users
+
+**Autopause is disabled in Kubernetes deployments** due to health check conflicts.
+
+If you want autopause in K8s:
+1. Set `ENABLE_AUTOPAUSE=true`
+2. Remove or adjust liveness probes:
+   ```yaml
+   livenessProbe:
+     tcpSocket:
+       port: 25565
+     initialDelaySeconds: 300
+     periodSeconds: 60  # Increase interval
+     failureThreshold: 10  # More tolerance
+   ```
+
+3. Expect potential pod restarts during pause
+
+## Troubleshooting
+
+### Server Won't Pause
+
+**Check logs:**
+```bash
+docker logs minecraft-server | grep -i autopause
+```
+
+**Common causes:**
+- Plugin activity (chunk loaders, farms)
+- Player still logged in
+- `AUTOPAUSE_TIMEOUT` too long
+- Autopause disabled
+
+### Server Won't Wake
+
+**Symptoms:** Connection hangs, no "sleeping" message
+
+**Fixes:**
+```bash
+# Manually wake server
+docker exec minecraft-server pkill -CONT java
+
+# Check wake-listener is running
+docker exec minecraft-server ps aux | grep wake-listener
+
+# Restart container if broken
+docker restart minecraft-server
+```
+
+### Port Issues
+
+**Error:** "Address already in use"
+
+**Fix:**
+```bash
+# Check what's using port 25565
+docker exec minecraft-server netstat -tulpn | grep 25565
+
+# Restart server to reset port proxy
+docker restart minecraft-server
+```
+
+### Player Can't Connect After Wake
+
+**Symptom:** Server wakes but connection fails
+
+**Fix:**
+- Player should retry connection after 5-10 seconds
+- Check logs for errors: `docker logs minecraft-server`
+- Verify server is actually running: `docker exec minecraft-server ps aux | grep java`
+
+## Advanced Configuration
+
+### Custom Wake Message
+
+The wake message is in `/wake-listener.py`. To customize:
+
+```bash
+# Copy script out
+docker cp minecraft-server:/wake-listener.py ./wake-listener.py
+
+# Edit the message
+nano wake-listener.py  # Edit the response string
+
+# Copy back
+docker cp ./wake-listener.py minecraft-server:/wake-listener.py
+
+# Restart
+docker restart minecraft-server
+```
+
+### Adjust Activity Detection
+
+The autopause.sh script monitors chunks. To adjust sensitivity, you'd need to modify the script:
+
+```bash
+# View current script
+docker exec minecraft-server cat /autopause.sh
+
+# Would require custom image to modify
+```
+
+## Best Practices
+
+1. **Set reasonable timeout**: 10-15 minutes prevents frequent pause/wake cycles
+2. **Inform players**: Let them know the server auto-pauses and to retry connection
+3. **Monitor logs**: Check autopause logs regularly for issues
+4. **Test wake**: Periodically test that wake works correctly
+5. **Disable for critical periods**: Disable during events or scheduled tasks
+
+## Next Steps
+
+- [Environment Variables](/lumo-server/configuration/environment/) - Full autopause configuration
+- [Architecture](/lumo-server/reference/architecture/) - Deep dive into autopause implementation
+- [Troubleshooting](/lumo-server/reference/troubleshooting/) - Common issues

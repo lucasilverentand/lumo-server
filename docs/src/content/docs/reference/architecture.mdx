@@ -1,0 +1,366 @@
+---
+title: Architecture
+description: Deep dive into Lumo Server's multi-stage build and service architecture
+---
+
+Understand the internal architecture of Lumo Server, from Docker build stages to background services.
+
+## Multi-Stage Docker Build
+
+The Dockerfile uses a 4-stage build process to create a minimal, optimized image.
+
+### Stage 1: mcrcon-builder
+
+**Purpose:** Compile the RCON CLI tool from source
+
+**Base image:** `alpine:3.20`
+
+**Process:**
+1. Install build tools (gcc, make, git)
+2. Clone mcrcon from GitHub
+3. Compile binary
+
+**Output:** `/tmp/mcrcon/mcrcon` binary
+
+**Why:** Provides RCON command-line access for automation and init-worlds.sh
+
+### Stage 2: plotsquared-builder
+
+**Purpose:** Build PlotSquared plugin from source
+
+**Base image:** `eclipse-temurin:21-jdk-alpine`
+
+**Process:**
+1. Clone PlotSquared repository
+2. Run Gradle build (`./gradlew :plotsquared-bukkit:shadowJar`)
+3. Extract compiled JAR
+
+**Output:** `/PlotSquared.jar`
+
+**Why:** PlotSquared releases may lag behind Paper versions. Building from source ensures compatibility.
+
+### Stage 3: downloader
+
+**Purpose:** Download all plugins and datapacks in parallel
+
+**Base image:** `alpine:3.20`
+
+**Process:**
+1. Install curl, jq, parallel
+2. Download Paper server from PaperMC API
+3. Define download script for Modrinth
+4. Download 20+ plugins in parallel using GNU parallel
+5. Download Terralith datapack
+
+**Downloaded:**
+- Paper server JAR
+- 20+ plugins from Modrinth
+- Vault and SmoothTimber from Spiget
+- Shopkeepers from GitHub
+- PlotSquared from builder stage
+- Terralith datapack
+
+**Parallelization:** Uses `-j8` (8 concurrent downloads) for speed
+
+### Stage 4: Final Image
+
+**Purpose:** Minimal runtime image with all components
+
+**Base image:** `eclipse-temurin:21-jre-alpine`
+
+**Setup:**
+1. Create minecraft user (UID 1000, GID 1000)
+2. Install runtime dependencies (bash, tini, python3, socat, netcat)
+3. Copy Paper server and plugins from downloader
+4. Copy mcrcon from builder
+5. Copy plugin configurations from repo
+6. Copy entrypoint and service scripts
+7. Set permissions
+
+**Exposed ports:**
+- 25565/tcp - Minecraft
+- 25575/tcp - RCON
+- 8100/tcp - BlueMap
+- 24454/udp - Voice chat
+
+**Volume:** `/data` - Persistent world and configuration storage
+
+**Entrypoint:** `/sbin/tini -- /entrypoint.sh`
+
+## Container Startup Flow
+
+### 1. Tini Init
+
+**Why:** Tini is a minimal init system that properly reaps zombie processes.
+
+### 2. Entrypoint Script (`/entrypoint.sh`)
+
+**Responsibilities:**
+
+#### a. EULA Check
+```bash
+if [ "$EULA" != "true" ]; then
+  echo "EULA not accepted. Set EULA=true"
+  exit 1
+fi
+```
+
+Ensures user has accepted Minecraft EULA.
+
+#### b. File Synchronization
+
+Syncs plugin configs from `/server/plugins/` to `/data/plugins/`:
+- Only copies if file doesn't exist in `/data`
+- Preserves user customizations
+- Ensures defaults are present
+
+#### c. Server.properties Generation
+
+Generates `server.properties` from environment variables:
+- Sets all configurable properties
+- Uses sensible defaults
+- Only regenerates if changed
+
+#### d. Operators and Whitelist
+
+Parses `OPS` and `WHITELIST_USERS` environment variables:
+- Generates `ops.json`
+- Generates `whitelist.json`
+- Supports op levels (`:1`, `:2`, `:3`, `:4`)
+
+#### e. World Initialization
+
+If `/data/world` doesn't exist (first run):
+- Starts `init-worlds.sh` in background
+- Script waits for server to start
+- Creates 5 worlds via RCON
+- Installs Terralith datapack
+
+#### f. Backup Daemon
+
+If `BACKUP_ENABLED=true`:
+- Starts `/backup.py` in background
+- Runs on interval specified by `BACKUP_INTERVAL`
+
+#### g. Autopause Setup
+
+If `ENABLE_AUTOPAUSE=true`:
+- Starts socat proxy on port 25565 → 25566
+- Starts Minecraft on port 25566 (not 25565)
+- Starts `/autopause.sh` daemon
+- Starts `/wake-listener.py` daemon
+
+#### h. JVM Startup
+
+Launches Paper server with Aikar's flags:
+```bash
+java -Xms${MEMORY} -Xmx${MEMORY} \
+  -XX:+UseG1GC \
+  -XX:+ParallelRefProcEnabled \
+  -XX:MaxGCPauseMillis=200 \
+  # ... more flags ...
+  -jar paper.jar --nogui
+```
+
+## Background Services
+
+### init-worlds.sh
+
+**Purpose:** Create initial worlds on first startup
+
+**How it works:**
+1. Waits up to 60s for server to start (polls for "Done" in logs)
+2. Connects via RCON
+3. Executes Multiverse commands to create 5 worlds
+4. Installs Terralith datapack to lumo_wilds
+5. Exits after completion
+
+**Runs:** Once on first startup (when `/data/world` doesn't exist)
+
+### backup.py
+
+**Purpose:** Automated backup scheduler
+
+**How it works:**
+1. Runs in infinite loop with sleep interval
+2. Disables world saving via RCON: `save-off`
+3. Creates tar.gz backup of `/data`
+4. Enables world saving: `save-on`
+5. Applies retention policy (deletes old backups)
+6. Uploads to S3/rclone if configured
+7. Sends Discord notification if configured
+
+**Runs:** Continuously if `BACKUP_ENABLED=true`
+
+### autopause.sh
+
+**Purpose:** Monitor activity and pause JVM when idle
+
+**How it works:**
+1. Polls every `AUTOPAUSE_POLL_INTERVAL` seconds
+2. Checks player count via RCON
+3. Checks chunk loading (indicates plugin activity)
+4. If idle for `AUTOPAUSE_TIMEOUT` minutes:
+   - Sends SIGSTOP to Java process
+   - Switches socat proxy to wake-listener
+5. When activity detected:
+   - Sends SIGCONT to Java process
+   - Switches socat proxy to Minecraft server
+
+**Runs:** Continuously if `ENABLE_AUTOPAUSE=true`
+
+### wake-listener.py
+
+**Purpose:** Show "sleeping" message and wake server
+
+**How it works:**
+1. Listens on port 25565 (via socat proxy when paused)
+2. When connection received:
+   - Sends Minecraft protocol message: "Server is sleeping, waking up..."
+   - Signals autopause.sh to wake server
+   - Closes connection
+
+**Runs:** Continuously if `ENABLE_AUTOPAUSE=true`
+
+## Port Routing
+
+### Normal Mode (No Autopause)
+
+```
+External:25565 → Container:25565 → Minecraft server
+```
+
+### Autopause Mode - Active
+
+```
+External:25565 → Container:25565 → socat proxy → Container:25566 → Minecraft server
+```
+
+### Autopause Mode - Paused
+
+```
+External:25565 → Container:25565 → wake-listener.py (shows message, wakes server)
+```
+
+## File Organization
+
+### Container Filesystem
+
+```
+/server/               # Static files (built into image)
+  ├── paper.jar        # Paper server
+  ├── plugins/         # Plugin JARs and default configs
+  └── datapacks/       # Terralith datapack
+
+/data/                 # Persistent volume mount
+  ├── world/           # Default world
+  ├── lumo_wilds/      # Custom worlds...
+  ├── plugins/         # Live plugin configs
+  ├── server.properties
+  ├── ops.json
+  ├── whitelist.json
+  └── logs/
+
+/backups/              # Backup volume mount (optional)
+  └── *.tar.gz         # Backup archives
+
+/entrypoint.sh         # Container startup script
+/init-worlds.sh        # World initialization
+/autopause.sh          # Autopause daemon
+/wake-listener.py      # Wake listener daemon
+/backup.py             # Backup scheduler
+/restore.sh            # Restore script
+```
+
+### Volume Mounts
+
+**Critical volumes:**
+- `/data` → Persistent storage for worlds, configs, player data
+- `/backups` → Backup storage (optional but recommended)
+
+**Config mount (optional):**
+- `~/.config/rclone:/root/.config/rclone:ro` → Rclone config for cloud backups
+
+## Process Tree
+
+When running with all features:
+
+```
+tini (PID 1)
+  └─ entrypoint.sh (PID 7)
+       ├─ java (Minecraft server) (PID 50)
+       ├─ init-worlds.sh (PID 60) [exits after completion]
+       ├─ python3 /backup.py (PID 70)
+       ├─ autopause.sh (PID 80)
+       ├─ wake-listener.py (PID 90)
+       └─ socat (port proxy) (PID 100)
+```
+
+## Resource Usage
+
+**Typical consumption:**
+
+| Component | CPU | Memory |
+|-----------|-----|--------|
+| Minecraft server | 50-200% | ~4GB (configurable) |
+| Python backup daemon | &lt;1% | ~50MB |
+| Autopause script | &lt;1% | ~10MB |
+| Wake listener | &lt;1% | ~30MB |
+| Socat proxy | &lt;1% | ~5MB |
+
+**Total:** ~2-4 CPU cores, 4-6GB RAM
+
+## Health Checks
+
+Built-in Docker health check:
+
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
+    CMD nc -z localhost 25565 || exit 1
+```
+
+**Check status:**
+```bash
+docker inspect --format='{{json .State.Health}}' minecraft-server
+```
+
+## CI/CD Pipeline
+
+GitHub Actions workflow (`.github/workflows/build.yml`):
+
+1. **Build job:**
+   - Set up Docker Buildx
+   - Build image with cache
+   - Save image as artifact
+
+2. **Test job:**
+   - Load image
+   - Verify file structure
+   - Start server
+   - Wait for "Done" in logs
+   - Test RCON connectivity
+   - Verify 17+ plugins loaded
+   - Test plugin functionality (BlueMap, PlotSquared, economy, shops)
+
+3. **Push job:**
+   - Tag as `latest`, `{MC_VERSION}`, `{sha}`
+   - Push to ghcr.io
+
+## Security
+
+**Container security:**
+- Runs as non-root user (`minecraft`, UID 1000)
+- Minimal Alpine base (smaller attack surface)
+- No SSH or unnecessary services
+- Read-only rclone mount
+
+**Network security:**
+- Only necessary ports exposed
+- RCON password configurable (change from default!)
+- Online mode enabled by default (Mojang authentication)
+
+## Next Steps
+
+- [Environment Variables](/lumo-server/configuration/environment/) - Full configuration reference
+- [Troubleshooting](/lumo-server/reference/troubleshooting/) - Common issues
+- [Plugins List](/lumo-server/reference/plugins/) - All included plugins

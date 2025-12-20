@@ -1,0 +1,432 @@
+---
+title: Kubernetes Deployment
+description: Deploy Lumo Server on Kubernetes with persistent storage and LoadBalancer
+---
+
+Deploy the Lumo Minecraft server on Kubernetes for high availability and easy scaling.
+
+## Prerequisites
+
+- Kubernetes cluster (1.19+)
+- `kubectl` configured
+- Persistent volume support (or dynamic provisioning)
+- LoadBalancer support (for external access) or NodePort
+
+## Basic Deployment
+
+### Namespace
+
+Create a dedicated namespace:
+
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: minecraft
+```
+
+Apply:
+
+```bash
+kubectl apply -f namespace.yaml
+```
+
+### Persistent Volume Claims
+
+Create PVCs for data and backups:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minecraft-data
+  namespace: minecraft
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minecraft-backups
+  namespace: minecraft
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+```
+
+### Deployment
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lumo-server
+  namespace: minecraft
+spec:
+  replicas: 1  # Minecraft servers must have exactly 1 replica
+  strategy:
+    type: Recreate  # Important: Do not use RollingUpdate
+  selector:
+    matchLabels:
+      app: lumo-server
+  template:
+    metadata:
+      labels:
+        app: lumo-server
+    spec:
+      containers:
+      - name: minecraft
+        image: ghcr.io/lucasilverentand/lumo-server:latest
+        ports:
+        - containerPort: 25565
+          name: minecraft
+          protocol: TCP
+        - containerPort: 8100
+          name: bluemap
+          protocol: TCP
+        - containerPort: 25575
+          name: rcon
+          protocol: TCP
+        - containerPort: 24454
+          name: voicechat
+          protocol: UDP
+        env:
+        - name: EULA
+          value: "true"
+        - name: MEMORY
+          value: "4G"
+        - name: ENABLE_AUTOPAUSE
+          value: "false"  # Disable in Kubernetes (health checks conflict)
+        - name: BACKUP_ENABLED
+          value: "true"
+        - name: RCON_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minecraft-secrets
+              key: rcon-password
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2000m"
+          limits:
+            memory: "6Gi"
+            cpu: "4000m"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: backups
+          mountPath: /backups
+        livenessProbe:
+          tcpSocket:
+            port: 25565
+          initialDelaySeconds: 300
+          periodSeconds: 30
+        readinessProbe:
+          tcpSocket:
+            port: 25565
+          initialDelaySeconds: 60
+          periodSeconds: 10
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: minecraft-data
+      - name: backups
+        persistentVolumeClaim:
+          claimName: minecraft-backups
+```
+
+### Service
+
+Expose the server using LoadBalancer or NodePort:
+
+#### LoadBalancer (Cloud Providers)
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: lumo-server
+  namespace: minecraft
+spec:
+  type: LoadBalancer
+  selector:
+    app: lumo-server
+  ports:
+  - name: minecraft
+    port: 25565
+    targetPort: 25565
+    protocol: TCP
+  - name: bluemap
+    port: 8100
+    targetPort: 8100
+    protocol: TCP
+  - name: rcon
+    port: 25575
+    targetPort: 25575
+    protocol: TCP
+  - name: voicechat
+    port: 24454
+    targetPort: 24454
+    protocol: UDP
+```
+
+#### NodePort (Self-Hosted)
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: lumo-server
+  namespace: minecraft
+spec:
+  type: NodePort
+  selector:
+    app: lumo-server
+  ports:
+  - name: minecraft
+    port: 25565
+    targetPort: 25565
+    nodePort: 30565  # Access on <node-ip>:30565
+    protocol: TCP
+  - name: bluemap
+    port: 8100
+    targetPort: 8100
+    nodePort: 30100
+    protocol: TCP
+```
+
+### Secrets
+
+Store sensitive configuration:
+
+```bash
+kubectl create secret generic minecraft-secrets \
+  --from-literal=rcon-password='your-strong-password' \
+  -n minecraft
+```
+
+## Configuration via ConfigMap
+
+For environment variables, use a ConfigMap:
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minecraft-config
+  namespace: minecraft
+data:
+  MEMORY: "4G"
+  DIFFICULTY: "hard"
+  MAX_PLAYERS: "20"
+  MOTD: "Welcome to Lumo Server on Kubernetes!"
+  OPS: "YourMinecraftUsername"
+```
+
+Reference in deployment:
+
+```yaml
+envFrom:
+- configMapRef:
+    name: minecraft-config
+```
+
+## Cloud Storage for Backups
+
+### AWS S3
+
+Create secret with AWS credentials:
+
+```bash
+kubectl create secret generic aws-credentials \
+  --from-literal=AWS_ACCESS_KEY_ID='your-key' \
+  --from-literal=AWS_SECRET_ACCESS_KEY='your-secret' \
+  -n minecraft
+```
+
+Add to deployment env:
+
+```yaml
+- name: S3_ENABLED
+  value: "true"
+- name: S3_BUCKET
+  value: "minecraft-backups"
+- name: AWS_DEFAULT_REGION
+  value: "us-east-1"
+- name: AWS_ACCESS_KEY_ID
+  valueFrom:
+    secretKeyRef:
+      name: aws-credentials
+      key: AWS_ACCESS_KEY_ID
+- name: AWS_SECRET_ACCESS_KEY
+  valueFrom:
+    secretKeyRef:
+      name: aws-credentials
+      key: AWS_SECRET_ACCESS_KEY
+```
+
+## Helm Chart (Advanced)
+
+For easier management, consider creating a Helm chart:
+
+```yaml
+# values.yaml
+image:
+  repository: ghcr.io/lucasilverentand/lumo-server
+  tag: latest
+  pullPolicy: Always
+
+minecraft:
+  eula: true
+  memory: "4G"
+  ops: "YourUsername"
+  motd: "Lumo Server"
+
+service:
+  type: LoadBalancer
+  ports:
+    minecraft: 25565
+    bluemap: 8100
+    rcon: 25575
+
+persistence:
+  data:
+    enabled: true
+    size: 10Gi
+  backups:
+    enabled: true
+    size: 20Gi
+
+resources:
+  requests:
+    memory: 4Gi
+    cpu: 2
+  limits:
+    memory: 6Gi
+    cpu: 4
+```
+
+## Monitoring
+
+Add Prometheus metrics exporter sidecar:
+
+```yaml
+- name: minecraft-exporter
+  image: joshi425/minecraft_exporter:latest
+  ports:
+  - containerPort: 9150
+    name: metrics
+  env:
+  - name: MC_RCON_ADDRESS
+    value: "localhost:25575"
+  - name: MC_RCON_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: minecraft-secrets
+        key: rcon-password
+```
+
+## Scaling Considerations
+
+:::caution
+Minecraft servers are **stateful** and cannot be horizontally scaled. Always use `replicas: 1`.
+:::
+
+For multiple servers:
+- Deploy separate instances with different names
+- Use different namespaces or selectors
+- Each needs its own PVC
+
+## Backup Strategy
+
+1. **Local PVC**: Automated backups to `/backups` volume
+2. **S3**: Offsite backups for disaster recovery
+3. **PVC Snapshots**: Use your cluster's volume snapshot feature
+
+Example snapshot:
+
+```yaml
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshot
+metadata:
+  name: minecraft-data-snapshot
+  namespace: minecraft
+spec:
+  source:
+    persistentVolumeClaimName: minecraft-data
+```
+
+## Troubleshooting
+
+### Pod Stuck in Pending
+
+Check PVC binding:
+
+```bash
+kubectl get pvc -n minecraft
+kubectl describe pvc minecraft-data -n minecraft
+```
+
+### Server Not Accessible
+
+Check service external IP:
+
+```bash
+kubectl get svc -n minecraft
+```
+
+View pod logs:
+
+```bash
+kubectl logs -f deployment/lumo-server -n minecraft
+```
+
+### Performance Issues
+
+Increase resources in deployment:
+
+```yaml
+resources:
+  requests:
+    memory: "6Gi"
+    cpu: "3000m"
+  limits:
+    memory: "8Gi"
+    cpu: "6000m"
+```
+
+## Complete Example
+
+Save all manifests in `minecraft-k8s.yaml`:
+
+```bash
+kubectl apply -f minecraft-k8s.yaml
+```
+
+Monitor deployment:
+
+```bash
+kubectl get all -n minecraft
+kubectl logs -f deployment/lumo-server -n minecraft
+```
+
+Get external IP:
+
+```bash
+kubectl get svc lumo-server -n minecraft
+```
+
+Connect to the server using the `EXTERNAL-IP` shown in the service.
+
+## Next Steps
+
+- [Environment Variables](/lumo-server/configuration/environment/) - Full configuration reference
+- [Automated Backups](/lumo-server/features/backups/) - Configure S3 backups
+- [Troubleshooting](/lumo-server/reference/troubleshooting/) - Common issues
