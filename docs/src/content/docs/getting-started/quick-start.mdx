@@ -1,0 +1,91 @@
+---
+title: Quick Start
+description: Get your Lumo server running in minutes
+---
+
+Get your Lumo Minecraft server up and running with a single command.
+
+## Prerequisites
+
+- Docker installed on your system ([Get Docker](https://docs.docker.com/get-docker/))
+- At least 4GB of available RAM
+- Port 25565 available (Minecraft default port)
+
+## Run the Server
+
+The simplest way to start the server:
+
+```bash
+docker run -e EULA=true -p 25565:25565 ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+:::note
+By setting `EULA=true`, you are agreeing to the [Minecraft EULA](https://www.minecraft.net/en-us/eula).
+:::
+
+This command will:
+1. Pull the latest Lumo server image from GitHub Container Registry
+2. Start the Paper server with default settings (4GB RAM)
+3. Create 5 worlds automatically (hub, wilds, nether, end, city)
+4. Load all 20+ plugins
+5. Enable autopause to save resources when idle
+
+## Connect to Your Server
+
+1. Open Minecraft Java Edition (version 1.21.10)
+2. Go to Multiplayer → Add Server
+3. Enter:
+   - **Server Name**: Lumo Server (or any name you like)
+   - **Server Address**: `localhost:25565` (or your server's IP)
+4. Click Done and connect!
+
+You'll spawn in the hub world. Use `/mv tp lumo_wilds` to teleport to the survival world.
+
+## First Login
+
+When you first connect:
+
+1. You'll be an operator (op) automatically if you're the first player
+2. The server has pre-configured worlds ready to explore
+3. Check out `/spawn` for the hub area
+4. Use `/mv list` to see all available worlds
+
+## Next Steps
+
+Your server is now running, but data is temporary. To persist your worlds and configure features:
+
+- [Docker Setup](/lumo-server/getting-started/docker/) - Add persistence, configure memory, enable backups
+- [Environment Variables](/lumo-server/configuration/environment/) - Customize server settings
+- [Automated Backups](/lumo-server/features/backups/) - Set up automated backups to S3 or local storage
+
+## Stop the Server
+
+To stop the server gracefully:
+
+```bash
+# Find your container ID
+docker ps
+
+# Stop the server (allows it to save worlds)
+docker stop <container-id>
+```
+
+:::caution
+Without volume mounting, your worlds will be lost when the container stops. See [Docker Setup](/lumo-server/getting-started/docker/) to add persistence.
+:::
+
+## Troubleshooting
+
+**Server won't start?**
+- Check Docker logs: `docker logs <container-id>`
+- Verify port 25565 is not in use: `lsof -i :25565` (Mac/Linux) or `netstat -ano | findstr :25565` (Windows)
+- Ensure EULA is accepted: `-e EULA=true`
+
+**Can't connect?**
+- Verify the server is running: `docker ps`
+- Check firewall allows port 25565
+- If using a remote server, use its public IP instead of `localhost`
+
+**Server is laggy?**
+- Increase memory: `-e MEMORY=6G` (default is 4G)
+- Disable autopause if issues: `-e ENABLE_AUTOPAUSE=false`

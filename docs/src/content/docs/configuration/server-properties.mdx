@@ -1,0 +1,267 @@
+---
+title: Server Properties
+description: Advanced server.properties configuration and customization
+---
+
+The Lumo server automatically generates `server.properties` from environment variables. This page explains how the generation works and how to customize it.
+
+## How It Works
+
+The `entrypoint.sh` script generates `server.properties` on startup using environment variables. This means:
+
+1. **No manual editing needed** - Configure via ENV vars
+2. **Updates persist** - Changes survive container restarts
+3. **Defaults provided** - Sensible defaults for all properties
+
+## Generated Properties
+
+### Server Basics
+
+These are generated from environment variables:
+
+| Property | ENV Variable | Default |
+|----------|--------------|---------|
+| `max-players` | `MAX_PLAYERS` | `20` |
+| `motd` | `MOTD` | `Welcome to the Lumo Universe!` |
+| `difficulty` | `DIFFICULTY` | `normal` |
+| `gamemode` | `GAMEMODE` | `survival` |
+| `hardcore` | `HARDCORE` | `false` |
+| `pvp` | `PVP` | `true` |
+| `online-mode` | `ONLINE_MODE` | `true` |
+
+### World Configuration
+
+| Property | ENV Variable | Default |
+|----------|--------------|---------|
+| `level-name` | - | `world` |
+| `level-type` | - | `default` |
+| `level-seed` | - | (random) |
+| `view-distance` | `VIEW_DISTANCE` | `12` |
+| `simulation-distance` | `SIMULATION_DISTANCE` | `10` |
+| `spawn-protection` | `SPAWN_PROTECTION` | `0` |
+
+### Entity Spawning
+
+| Property | ENV Variable | Default |
+|----------|--------------|---------|
+| `spawn-animals` | `SPAWN_ANIMALS` | `true` |
+| `spawn-monsters` | `SPAWN_MONSTERS` | `true` |
+| `spawn-npcs` | `SPAWN_NPCS` | `true` |
+
+### Performance
+
+| Property | ENV Variable | Default |
+|----------|--------------|---------|
+| `max-tick-time` | `MAX_TICK_TIME` | `-1` |
+| `network-compression-threshold` | `NETWORK_COMPRESSION_THRESHOLD` | `256` |
+| `entity-broadcast-range-percentage` | `ENTITY_BROADCAST_RANGE` | `100` |
+
+### Server Behavior
+
+| Property | ENV Variable | Default |
+|----------|--------------|---------|
+| `allow-flight` | `ALLOW_FLIGHT` | `true` |
+| `enable-command-block` | `ENABLE_COMMAND_BLOCK` | `true` |
+| `white-list` | `WHITELIST` | `false` |
+| `enforce-whitelist` | `ENFORCE_WHITELIST` | `false` |
+| `player-idle-timeout` | `PLAYER_IDLE_TIMEOUT` | `0` |
+
+### RCON
+
+| Property | ENV Variable | Default |
+|----------|--------------|---------|
+| `enable-rcon` | `ENABLE_RCON` | `true` |
+| `rcon.password` | `RCON_PASSWORD` | `minecraft` |
+| `rcon.port` | `RCON_PORT` | `25575` |
+
+## Manual Customization
+
+If you need properties not covered by environment variables, you can:
+
+### Option 1: Edit After First Start
+
+1. Start the container once to generate the file
+2. Stop the container
+3. Edit the file in the volume
+4. Restart
+
+```bash
+# Start container
+docker run -d --name minecraft -e EULA=true -v minecraft_data:/data ghcr.io/lucasilverentand/lumo-server:latest
+
+# Wait for server to start
+sleep 60
+
+# Stop server
+docker stop minecraft
+
+# Edit server.properties (requires docker cp or volume inspection)
+docker run --rm -v minecraft_data:/data -it alpine vi /data/server.properties
+
+# Restart
+docker start minecraft
+```
+
+### Option 2: Mount Custom File
+
+Create your own `server.properties`:
+
+```properties
+# server.properties
+max-players=50
+difficulty=hard
+gamemode=survival
+motd=My Custom Server
+# ... other properties ...
+```
+
+Mount it into the container:
+
+```bash
+docker run \
+  -e EULA=true \
+  -v /path/to/server.properties:/data/server.properties:ro \
+  ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+:::caution
+This prevents automatic updates. Environment variables will be ignored for properties in your custom file.
+:::
+
+## Advanced Properties
+
+Some properties are set automatically and shouldn't be changed:
+
+| Property | Value | Reason |
+|----------|-------|--------|
+| `server-port` | `25565` | Docker port mapping handles external port |
+| `server-ip` | `0.0.0.0` | Binds to all interfaces (required in container) |
+| `enable-query` | `false` | Not needed with RCON |
+| `enable-status` | `true` | Required for server list |
+
+## Port Configuration
+
+The server always uses port `25565` **inside** the container. Change the external port via Docker:
+
+```bash
+# External port 25566, internal port 25565
+-p 25566:25565
+```
+
+**Don't** change `server-port` in server.properties when using Docker.
+
+## JVM Configuration
+
+JVM flags are set in `entrypoint.sh` using [Aikar's flags](https://docs.papermc.io/paper/aikars-flags):
+
+```bash
+java -Xms${MEMORY} -Xmx${MEMORY} \
+  -XX:+AlwaysPreTouch \
+  -XX:+DisableExplicitGC \
+  -XX:+ParallelRefProcEnabled \
+  -XX:+PerfDisableSharedMem \
+  -XX:+UnlockExperimentalVMOptions \
+  -XX:+UseG1GC \
+  -XX:G1HeapRegionSize=8M \
+  -XX:G1HeapWastePercent=5 \
+  -XX:G1MaxNewSizePercent=40 \
+  -XX:G1MixedGCCountTarget=4 \
+  -XX:G1MixedGCLiveThresholdPercent=90 \
+  -XX:G1NewSizePercent=30 \
+  -XX:G1RSetUpdatingPauseTimePercent=5 \
+  -XX:G1ReservePercent=20 \
+  -XX:InitiatingHeapOccupancyPercent=15 \
+  -XX:MaxGCPauseMillis=200 \
+  -XX:MaxTenuringThreshold=1 \
+  -XX:SurvivorRatio=32 \
+  -Dusing.aikars.flags=https://mcflags.emc.gs \
+  -Daikars.new.flags=true \
+  -jar paper.jar --nogui
+```
+
+**To modify JVM flags**, you'll need to build a custom image with modified `entrypoint.sh`.
+
+## Property Priority
+
+Properties are applied in this order (later overrides earlier):
+
+1. **Default values** in entrypoint.sh
+2. **Environment variables**
+3. **Existing server.properties** (if already present and not regenerated)
+
+:::note
+The entrypoint script only generates server.properties if it doesn't exist or has changed. Manual edits may be overwritten on restart if they conflict with ENV vars.
+:::
+
+## Examples
+
+### Creative Server with Increased View Distance
+
+```bash
+docker run \
+  -e EULA=true \
+  -e GAMEMODE=creative \
+  -e DIFFICULTY=peaceful \
+  -e VIEW_DISTANCE=16 \
+  -e ALLOW_FLIGHT=true \
+  -e SPAWN_MONSTERS=false \
+  ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+### Hardcore PvP Server
+
+```bash
+docker run \
+  -e EULA=true \
+  -e HARDCORE=true \
+  -e DIFFICULTY=hard \
+  -e PVP=true \
+  -e SPAWN_PROTECTION=0 \
+  ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+### Whitelisted Private Server
+
+```bash
+docker run \
+  -e EULA=true \
+  -e WHITELIST=true \
+  -e ENFORCE_WHITELIST=true \
+  -e WHITELIST_USERS="Player1,Player2,Player3" \
+  -e ONLINE_MODE=true \
+  ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+## Viewing Current Properties
+
+Check the generated properties:
+
+```bash
+docker exec minecraft-server cat /data/server.properties
+```
+
+## Troubleshooting
+
+### Properties Not Updating
+
+If environment variable changes aren't reflected:
+
+1. Stop the container
+2. Remove server.properties from the volume
+3. Restart - it will be regenerated
+
+```bash
+docker stop minecraft-server
+docker run --rm -v minecraft_data:/data alpine rm /data/server.properties
+docker start minecraft-server
+```
+
+### Conflicts with Plugins
+
+Some plugins (like Multiverse) override world settings. Check plugin configs if properties seem ignored.
+
+## Next Steps
+
+- [Environment Variables](/lumo-server/configuration/environment/) - Full ENV reference
+- [Plugin Configuration](/lumo-server/configuration/plugins/) - Configure plugins
+- [Troubleshooting](/lumo-server/reference/troubleshooting/) - Common issues

@@ -1,0 +1,79 @@
+---
+title: Lumo Server
+description: Production-ready Minecraft Paper server in Docker
+template: splash
+hero:
+  title: Lumo Server
+  tagline: Docker-based Minecraft Paper server with 20+ plugins, autopause functionality, and automated backups
+  actions:
+    - text: Get Started
+      link: /lumo-server/getting-started/quick-start/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/lucasilverentand/lumo-server
+      icon: external
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Key Features
+
+<CardGrid>
+  <Card title="Docker-Based" icon="seti:docker">
+    Single container design with multi-stage build. No docker-compose required for basic usage.
+  </Card>
+  <Card title="20+ Plugins" icon="puzzle">
+    Pre-configured plugins including Multiverse, BlueMap, FastAsyncWorldEdit, WorldGuard, LuckPerms, and more.
+  </Card>
+  <Card title="Autopause" icon="moon">
+    Intelligent idle detection pauses the JVM to save resources when no players are online.
+  </Card>
+  <Card title="Automated Backups" icon="approve-check">
+    Comprehensive backup system with compression, retention policies, and S3/rclone support.
+  </Card>
+  <Card title="5 Custom Worlds" icon="open-folder">
+    Auto-created worlds: hub, survival wilds with Terralith, plot city, and linked dimensions.
+  </Card>
+  <Card title="Production Ready" icon="rocket">
+    Automated CI/CD testing, health checks, and comprehensive monitoring.
+  </Card>
+</CardGrid>
+
+## Quick Example
+
+Run the server with a single command:
+
+```bash
+docker run -e EULA=true -p 25565:25565 ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+For persistence and full features:
+
+```bash
+docker run -e EULA=true -e MEMORY=4G -e ENABLE_AUTOPAUSE=true \
+  -p 25565:25565 -p 8100:8100 -p 25575:25575 -p 24454:24454/udp \
+  -v minecraft_data:/data \
+  -v minecraft_backups:/backups \
+  ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+## Container Registry
+
+Images are available on GitHub Container Registry:
+
+- **Latest**: `ghcr.io/lucasilverentand/lumo-server:latest`
+- **Tagged**: `ghcr.io/lucasilverentand/lumo-server:1.21.10`
+- **SHA**: `ghcr.io/lucasilverentand/lumo-server:<commit-sha>`
+
+## What's Included
+
+- **Server**: Paper 1.21.10 with Aikar flags for optimized performance
+- **World Generation**: Terralith datapack for beautiful custom terrain
+- **Plugins**: See the [full plugins list](/lumo-server/reference/plugins/) for details
+- **Tools**: RCON for server management, BlueMap for web-based maps
+- **Background Services**: Autopause daemon, backup scheduler, world initialization
+
+## Get Started
+
+Ready to run your own Lumo server? Check out the [Quick Start guide](/lumo-server/getting-started/quick-start/) or dive into [Docker Setup](/lumo-server/getting-started/docker/) for detailed configuration options.

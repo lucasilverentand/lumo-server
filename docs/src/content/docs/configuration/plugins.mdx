@@ -1,0 +1,388 @@
+---
+title: Plugin Configuration
+description: Configure and customize pre-installed plugins
+---
+
+Lumo Server comes with 20+ pre-configured plugins. This guide covers how to access and customize their configurations.
+
+## Plugin Configuration Files
+
+Plugin configs are stored in `/data/plugins/<PluginName>/`. Some are pre-configured and synced from the image, others generate on first run.
+
+### Pre-Configured Plugins
+
+These plugins have custom configurations baked into the image:
+
+- **BlueMap** - Web map configuration
+- **Chunker** - World pre-generation settings
+- **Essentials** - Essential commands and economy
+- **PlotSquared** - Plot world configuration
+
+## Accessing Plugin Configs
+
+### View Configurations
+
+```bash
+# List all plugin config directories
+docker exec minecraft-server ls -la /data/plugins/
+
+# View a specific config file
+docker exec minecraft-server cat /data/plugins/BlueMap/core.conf
+```
+
+### Edit Configurations
+
+#### Option 1: Edit in Container
+
+```bash
+docker exec -it minecraft-server vi /data/plugins/PluginName/config.yml
+```
+
+#### Option 2: Copy Out, Edit, Copy Back
+
+```bash
+# Copy config from container
+docker cp minecraft-server:/data/plugins/LuckPerms/config.yml ./luckperms-config.yml
+
+# Edit locally
+nano luckperms-config.yml
+
+# Copy back
+docker cp ./luckperms-config.yml minecraft-server:/data/plugins/LuckPerms/config.yml
+
+# Reload plugin
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "lp reload"
+```
+
+## Key Plugin Configurations
+
+### BlueMap
+
+**Location**: `/data/plugins/BlueMap/`
+
+Pre-configured for Lumo worlds with optimized settings.
+
+**Key files:**
+- `core.conf` - Core configuration, web server settings
+- `webserver.conf` - Web server port (8100) and host
+- `render.conf` - Render settings and performance
+
+**Access web map**: `http://your-server:8100`
+
+**Customize render settings:**
+
+```bash
+docker exec -it minecraft-server vi /data/plugins/BlueMap/render.conf
+```
+
+### PlotSquared
+
+**Location**: `/data/plugins/PlotSquared/`
+
+Pre-configured for the `lumo_city` world with plot sizes and permissions.
+
+**Key settings:**
+- Plot size: 32x32 blocks
+- Road width: 7 blocks
+- Auto-merge enabled
+- Plot comments enabled
+
+**Edit plot settings:**
+
+```bash
+docker exec -it minecraft-server vi /data/plugins/PlotSquared/worlds.yml
+```
+
+### LuckPerms
+
+**Location**: `/data/plugins/LuckPerms/`
+
+**Permissions management via commands:**
+
+```bash
+# Create group
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "lp creategroup moderator"
+
+# Add permission to group
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "lp group moderator permission set worldedit.*"
+
+# Add user to group
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "lp user PlayerName parent add moderator"
+```
+
+**Web editor:**
+
+```bash
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "lp editor"
+```
+
+This generates a web URL for easy permission editing.
+
+### Chunker
+
+**Location**: `/data/plugins/Chunker/`
+
+**Environment variable:**
+```bash
+-e ENABLE_CHUNKER=true  # Enable world pre-generation
+```
+
+Pre-configured to pre-generate spawn chunks for `lumo_wilds` world.
+
+**Customize generation:**
+
+```yaml
+# /data/plugins/Chunker/config.yml
+tasks:
+  - world: lumo_wilds
+    radius: 5000
+    shape: square
+```
+
+**Commands:**
+
+```bash
+# Start generation
+/chunker start lumo_wilds
+
+# Pause generation
+/chunker pause lumo_wilds
+
+# Check progress
+/chunker status
+```
+
+### Essentials
+
+**Location**: `/data/plugins/Essentials/`
+
+Pre-configured with economy, warps, and homes.
+
+**Key configs:**
+- `config.yml` - Main configuration
+- `worth.yml` - Item values for economy
+- `kits.yml` - Starter kits
+
+**Economy settings:**
+
+```yaml
+# config.yml
+economy:
+  starting-balance: 100
+  currency-symbol: "$"
+```
+
+### WorldGuard
+
+**Location**: `/data/plugins/WorldGuard/`
+
+**Protect regions via commands:**
+
+```bash
+# Define region
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "region define spawn"
+
+# Set flags
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "region flag spawn pvp deny"
+```
+
+### FastAsyncWorldEdit (FAWE)
+
+**Location**: `/data/plugins/FastAsyncWorldEdit/`
+
+Pre-configured for performance with limits on history and block changes.
+
+**Key settings:**
+- Max history: 15
+- Max changed blocks: 50M
+- Async mode enabled
+
+**Give permissions:**
+
+```bash
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "lp user PlayerName permission set worldedit.*"
+```
+
+### Simple Voice Chat
+
+**Location**: `/data/plugins/voicechat/`
+
+**Default settings:**
+- Port: 24454 UDP
+- Voice distance: 48 blocks
+- Codec: Opus
+
+**Customize voice distance:**
+
+```yaml
+# config.yml
+voicechat:
+  voice_distance: 64.0
+  fade_distance: 16.0
+```
+
+:::note
+Ensure UDP port 24454 is mapped: `-p 24454:24454/udp`
+:::
+
+### QuickShop-Hikari
+
+**Location**: `/data/plugins/QuickShop-Hikari/`
+
+**Create chest shops:**
+
+Players can create shops by placing a chest and using `/qs create <price>`.
+
+**Admin commands:**
+
+```bash
+# Reload config
+/qs reload
+
+# Remove all shops
+/qs clean
+
+# Toggle unlimited shop
+/qs unlimited
+```
+
+### Shopkeepers
+
+**Location**: `/data/plugins/Shopkeepers/`
+
+**Create NPC shops:**
+
+```bash
+# Give shopkeeper creation item
+/shopkeeper give
+
+# Or use command
+/shopkeeper
+```
+
+**Works with FancyNpcs** for custom NPC models.
+
+## Reloading Plugins
+
+After editing configs, reload without restarting:
+
+```bash
+# Reload all plugins
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "reload confirm"
+
+# Reload specific plugin
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "pluginname:reload"
+
+# Examples
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "lp reload"
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "ess reload"
+```
+
+:::caution
+Some plugins (like Multiverse) may not fully reload. Server restart may be required.
+:::
+
+## Adding Custom Plugins
+
+To add plugins not included by default:
+
+### Option 1: Volume Mount
+
+```bash
+# Download plugin JAR
+wget -O myplugin.jar https://example.com/plugin.jar
+
+# Copy to volume
+docker cp myplugin.jar minecraft-server:/data/plugins/
+
+# Reload server
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "reload confirm"
+```
+
+### Option 2: Build Custom Image
+
+```dockerfile
+FROM ghcr.io/lucasilverentand/lumo-server:latest
+
+# Add custom plugin
+RUN curl -sSL -o /server/plugins/MyPlugin.jar \
+    https://example.com/myplugin.jar
+```
+
+## Plugin Dependencies
+
+Some plugins depend on others:
+
+- **Vault** - Required by: Essentials, QuickShop, Shopkeepers
+- **LuckPerms** - Provides permissions for all plugins
+- **WorldGuard** - Depends on WorldEdit/FAWE
+
+All dependencies are pre-installed.
+
+## Disabling Plugins
+
+To disable a plugin without removing it:
+
+```bash
+# Rename to .jar.disabled
+docker exec minecraft-server mv /data/plugins/PluginName.jar /data/plugins/PluginName.jar.disabled
+
+# Restart server
+docker restart minecraft-server
+```
+
+## Plugin Data Persistence
+
+Plugin data is stored in `/data/plugins/<PluginName>/`:
+
+- **LuckPerms**: `/data/plugins/LuckPerms/` - Permission data
+- **CoreProtect**: Database in `/data/plugins/CoreProtect/database.db`
+- **Essentials**: Player data in `/data/plugins/Essentials/userdata/`
+- **PlotSquared**: Plot data in `/data/plugins/PlotSquared/` and worlds
+
+**Ensure `/data` is mounted** to a volume to persist plugin data!
+
+## Backup Considerations
+
+The automated backup system includes:
+- All plugin configurations
+- All plugin data
+- Player data from plugins
+
+See [Automated Backups](/lumo-server/features/backups/) for details.
+
+## Troubleshooting
+
+### Plugin Won't Load
+
+Check logs:
+
+```bash
+docker logs minecraft-server | grep -i error
+```
+
+Common issues:
+- **Incompatible version**: Plugin needs newer/older Paper version
+- **Missing dependency**: Install required plugin (Vault, etc.)
+- **Corrupted config**: Delete config file and regenerate
+
+### Config Changes Ignored
+
+1. Ensure you edited the correct file (in `/data/plugins/`, not `/server/plugins/`)
+2. Reload the plugin
+3. Check for syntax errors (YAML is whitespace-sensitive)
+4. Restart server if reload doesn't work
+
+### Permission Denied
+
+Plugins inherit container user permissions. If issues:
+
+```bash
+docker exec minecraft-server chown -R minecraft:minecraft /data/plugins
+```
+
+## Next Steps
+
+- [Reference: Plugins List](/lumo-server/reference/plugins/) - Full list of included plugins with descriptions
+- [Environment Variables](/lumo-server/configuration/environment/) - Configure plugin behavior via ENV vars
+- [Troubleshooting](/lumo-server/reference/troubleshooting/) - Common plugin issues
