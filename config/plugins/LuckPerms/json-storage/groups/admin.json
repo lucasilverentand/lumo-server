@@ -1,0 +1,13 @@
+{
+  "name": "admin",
+  "permissions": [
+    "*"
+  ],
+  "parents": [
+    "moderator"
+  ],
+  "meta": {
+    "prefix": "&c[Admin] &c"
+  },
+  "weight": 100
+}

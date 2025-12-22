@@ -1,0 +1,76 @@
+# LuckPerms Configuration
+# See https://luckperms.net/wiki/Configuration for full documentation
+
+# Storage backend - using JSON for easy version control
+storage-method: json
+
+# Server name (for multi-server networks)
+server: lumo-server
+
+# Database settings (not used for JSON storage)
+data:
+  address: localhost:3306
+  database: minecraft
+  username: root
+  password: ''
+
+# Redis settings (for sync across multiple servers)
+redis:
+  enabled: false
+
+# Messaging service (not needed for single server)
+messaging-service: auto
+
+# Auto-op players with * permission
+auto-op: true
+
+# Commands aliases
+commands-allow-op: true
+
+# Verbose logging
+verbose-recording:
+  enabled: false
+
+# Apply permissions immediately
+apply-wildcards: true
+apply-regex: true
+
+# Stack trace when loading fails
+use-server-uuid-cache: false
+
+# Tab completion
+tab-complete-inline: true
+
+# Permission calculation
+enable-context-caching: true
+
+# Prefix/suffix stacking
+primary-group-calculation:
+  method: stored
+
+# Web editor
+web-editor-url-pattern: 'https://editor.luckperms.net/'
+
+# Vault hook (Vault is installed)
+vault-server: true
+vault-include-global: true
+vault-ignore-world: false
+vault-debug: false
+
+# Console logging for op commands
+log-notify: true
+
+# Meta formatting (for chat prefixes/suffixes)
+meta-formatting:
+  prefix:
+    format:
+      - "highest"
+    start-spacer: ""
+    end-spacer: " "
+    duplicates: first-only
+  suffix:
+    format:
+      - "highest"
+    start-spacer: " "
+    end-spacer: ""
+    duplicates: first-only

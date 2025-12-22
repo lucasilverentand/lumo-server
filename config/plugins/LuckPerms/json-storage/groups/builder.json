@@ -1,0 +1,51 @@
+{
+  "name": "builder",
+  "permissions": [
+    "worldedit.analysis.count",
+    "worldedit.analysis.distr",
+    "worldedit.clipboard.copy",
+    "worldedit.clipboard.cut",
+    "worldedit.clipboard.paste",
+    "worldedit.clipboard.rotate",
+    "worldedit.clipboard.flip",
+    "worldedit.clipboard.load",
+    "worldedit.clipboard.save",
+    "worldedit.generation.cylinder",
+    "worldedit.generation.sphere",
+    "worldedit.generation.pyramid",
+    "worldedit.history.undo",
+    "worldedit.history.redo",
+    "worldedit.history.clear",
+    "worldedit.region.set",
+    "worldedit.region.replace",
+    "worldedit.region.overlay",
+    "worldedit.region.walls",
+    "worldedit.region.faces",
+    "worldedit.region.smooth",
+    "worldedit.region.move",
+    "worldedit.region.stack",
+    "worldedit.selection.pos",
+    "worldedit.selection.chunk",
+    "worldedit.selection.hpos",
+    "worldedit.wand",
+    "worldedit.wand.toggle",
+    "worldedit.brush.sphere",
+    "worldedit.brush.cylinder",
+    "worldedit.brush.clipboard",
+    "worldedit.brush.smooth",
+    "worldedit.tool.tree",
+    "worldedit.tool.replacer",
+    "worldedit.tool.data-cycler",
+    "worldedit.tool.flood-fill",
+    "worldedit.navigation.jumpto.tool",
+    "worldedit.navigation.thru.tool",
+    "worldedit.limit.unrestricted"
+  ],
+  "parents": [
+    "default"
+  ],
+  "meta": {
+    "prefix": "&b[Builder] &b"
+  },
+  "weight": 10
+}
