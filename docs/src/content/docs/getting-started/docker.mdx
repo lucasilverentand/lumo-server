@@ -1,0 +1,325 @@
+---
+title: Docker Setup
+description: Comprehensive Docker configuration and deployment guide
+---
+
+Learn how to run Lumo Server with Docker, including persistence, port mapping, and advanced configuration.
+
+## Full Docker Command
+
+Here's the recommended production command with all features enabled:
+
+```bash
+docker run -d --name minecraft-server \
+  -e EULA=true \
+  -e MEMORY=4G \
+  -e ENABLE_AUTOPAUSE=true \
+  -e BACKUP_ENABLED=true \
+  -e OPS="YourMinecraftUsername" \
+  -p 25565:25565 \
+  -p 8100:8100 \
+  -p 25575:25575 \
+  -p 24454:24454/udp \
+  -v minecraft_data:/data \
+  -v minecraft_backups:/backups \
+  --restart unless-stopped \
+  ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+Let's break down each part:
+
+## Essential Options
+
+### Container Naming and Background Mode
+
+```bash
+-d --name minecraft-server
+```
+
+- `-d`: Run in detached mode (background)
+- `--name minecraft-server`: Give your container a friendly name
+
+### EULA Agreement
+
+```bash
+-e EULA=true
+```
+
+**Required**. Accepts the [Minecraft EULA](https://www.minecraft.net/en-us/eula). Server won't start without this.
+
+### Memory Allocation
+
+```bash
+-e MEMORY=4G
+```
+
+Sets JVM heap size. Recommended values:
+- **2G**: Minimal (1-5 players)
+- **4G**: Small server (5-15 players) - **default**
+- **6G**: Medium server (15-30 players)
+- **8G+**: Large server (30+ players)
+
+## Port Mapping
+
+### Game Port (Required)
+
+```bash
+-p 25565:25565
+```
+
+Main Minecraft connection port. Change the first number if you want a different external port:
+- `-p 25566:25565` - Server accessible on port 25566
+
+### BlueMap Web Interface (Optional)
+
+```bash
+-p 8100:8100
+```
+
+Web-based map viewer. Access at `http://your-server:8100`
+
+### RCON Port (Optional)
+
+```bash
+-p 25575:25575
+```
+
+Remote console for server management. Useful for external tools and automation.
+
+### Voice Chat (Optional)
+
+```bash
+-p 24454:24454/udp
+```
+
+Simple Voice Chat plugin port. **Must be UDP**.
+
+## Volume Persistence
+
+### World Data Volume
+
+```bash
+-v minecraft_data:/data
+```
+
+**Critical for persistence**. Stores:
+- All world files (overworld, nether, end, custom worlds)
+- Player data (inventories, positions, stats)
+- Plugin data (economy, permissions, claims)
+- Server configurations
+
+Without this, **all data is lost** when the container stops.
+
+### Backups Volume
+
+```bash
+-v minecraft_backups:/backups
+```
+
+Stores automated backups locally. Recommended even if using S3/rclone for redundancy.
+
+### Alternative: Bind Mounts
+
+Instead of Docker volumes, use host directories:
+
+```bash
+-v /path/on/host/minecraft:/data \
+-v /path/on/host/backups:/backups \
+```
+
+Pros: Easy to browse files, simple backups
+Cons: Permission issues on some systems
+
+## Restart Policy
+
+```bash
+--restart unless-stopped
+```
+
+Automatically restart the container:
+- After server crashes
+- After system reboots
+- Unless you manually stop it
+
+Options:
+- `no`: Never restart (default)
+- `on-failure`: Only restart on crashes
+- `always`: Always restart, even after manual stop
+- `unless-stopped`: Restart unless manually stopped - **recommended**
+
+## Docker Compose
+
+For easier management, create `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  minecraft:
+    image: ghcr.io/lucasilverentand/lumo-server:latest
+    container_name: minecraft-server
+    restart: unless-stopped
+    environment:
+      EULA: "true"
+      MEMORY: "4G"
+      ENABLE_AUTOPAUSE: "true"
+      BACKUP_ENABLED: "true"
+      OPS: "YourMinecraftUsername"
+      RCON_PASSWORD: "change-me-in-production"
+    ports:
+      - "25565:25565"      # Minecraft
+      - "8100:8100"        # BlueMap
+      - "25575:25575"      # RCON
+      - "24454:24454/udp"  # Voice chat
+    volumes:
+      - minecraft_data:/data
+      - minecraft_backups:/backups
+
+volumes:
+  minecraft_data:
+  minecraft_backups:
+```
+
+Start with:
+
+```bash
+docker-compose up -d
+```
+
+View logs:
+
+```bash
+docker-compose logs -f
+```
+
+Stop server:
+
+```bash
+docker-compose down
+```
+
+## Building from Source
+
+To build your own image:
+
+```bash
+git clone https://github.com/lucasilverentand/lumo-server.git
+cd lumo-server
+docker build -t lumo-server:custom .
+```
+
+Then run with your custom image:
+
+```bash
+docker run -e EULA=true -p 25565:25565 lumo-server:custom
+```
+
+## Management Commands
+
+### View Logs
+
+```bash
+docker logs minecraft-server
+
+# Follow logs (Ctrl+C to exit)
+docker logs -f minecraft-server
+
+# Last 100 lines
+docker logs --tail 100 minecraft-server
+```
+
+### Execute RCON Commands
+
+```bash
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "list"
+docker exec minecraft-server mcrcon -H localhost -P 25575 -p minecraft "whitelist add PlayerName"
+```
+
+### Access Container Shell
+
+```bash
+docker exec -it minecraft-server sh
+```
+
+### Manual Backup
+
+```bash
+docker exec minecraft-server python3 /backup.py
+```
+
+### Restart Server
+
+```bash
+docker restart minecraft-server
+```
+
+## Resource Limits
+
+Limit CPU and memory usage:
+
+```bash
+docker run \
+  --cpus="2.0" \
+  --memory="6g" \
+  --memory-reservation="4g" \
+  -e EULA=true \
+  ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+- `--cpus="2.0"`: Limit to 2 CPU cores
+- `--memory="6g"`: Hard limit at 6GB total memory
+- `--memory-reservation="4g"`: Soft limit, tries to stay under 4GB
+
+## Health Checks
+
+The image includes built-in health checks. View status:
+
+```bash
+docker ps
+```
+
+Look for "healthy" or "unhealthy" in the STATUS column.
+
+Check health details:
+
+```bash
+docker inspect --format='{{json .State.Health}}' minecraft-server | jq
+```
+
+## Networking
+
+### Host Network Mode (Advanced)
+
+For minimal latency:
+
+```bash
+docker run --network host \
+  -e EULA=true \
+  -v minecraft_data:/data \
+  ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+:::caution
+Host network mode bypasses Docker's network isolation. Only use on trusted networks.
+:::
+
+### Custom Docker Network
+
+Create isolated network for multiple services:
+
+```bash
+docker network create minecraft-net
+
+docker run --network minecraft-net \
+  --name minecraft-server \
+  -e EULA=true \
+  ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+## Next Steps
+
+Now that your server is configured:
+
+- [Environment Variables](/lumo-server/configuration/environment/) - Customize all server settings
+- [Automated Backups](/lumo-server/features/backups/) - Set up backups to cloud storage
+- [Kubernetes Deployment](/lumo-server/deployment/kubernetes/) - Deploy at scale

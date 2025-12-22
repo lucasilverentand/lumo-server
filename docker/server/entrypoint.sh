@@ -212,6 +212,12 @@ if [ "${ENABLE_AUTOPAUSE}" = "true" ] && [ -f "/autopause.sh" ]; then
     /autopause.sh &
 fi
 
+# Automated backups (daily backups with retention)
+if [ "${BACKUP_ENABLED}" = "true" ] && [ -f "/backup.py" ]; then
+    log "Starting backup system (interval: ${BACKUP_INTERVAL}s, retention: ${BACKUP_RETENTION_DAYS}d/${BACKUP_RETENTION_WEEKS}w)..."
+    python3 /backup.py &
+fi
+
 # =============================================================================
 # Start Server
 # =============================================================================

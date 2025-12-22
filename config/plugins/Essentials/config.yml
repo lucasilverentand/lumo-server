@@ -14,8 +14,8 @@ starting-balance: 1000
 # Set to -1 for unlimited.
 max-money: 10000000000000
 
-# The minimum amount of money a player can have (can be negative for debt).
-min-money: -10000
+# The minimum amount of money a player can have (set to 0 to prevent debt).
+min-money: 0
 
 # Currency symbol
 currency-symbol: '$'
@@ -101,23 +101,72 @@ sethome-multiple:
 
 ############################################################
 # +------------------------------------------------------+ #
-# |                   Other Settings                      | #
+# |                  Welcome Settings                     | #
 # +------------------------------------------------------+ #
 ############################################################
+
+# New player welcome configuration
+newbies:
+  # Welcome announcement when first-time players join
+  announce-format: '&b&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━&r\n&6&lWelcome to Lumo Server, {DISPLAYNAME}!\n\n&e✦ &7You start with &a$1000 &7to get you going\n&e✦ &7Visit the &bhub &7to explore different worlds\n&e✦ &7Use &e/plot auto &7to claim a plot in Lumo City\n&e✦ &7Type &e/help &7for a list of commands\n\n&dEnjoy your adventure!\n&b&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━&r'
+
+  # Auto-give starter kit to new players
+  kit: 'starter'
 
 # Heal newbies on first join
 heal-on-newbie: true
 
-# Kit delay in seconds (use 0 for one-time kits)
+# Message of the Day (shown on join)
+motd:
+  - '&6&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+  - '&e&lLumo Server &7- Multi-world survival experience'
+  - '&7Type &e/help &7for commands | &7Type &e/warp &7to explore'
+  - '&6&l━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+
+############################################################
+# +------------------------------------------------------+ #
+# |                    Kits Settings                      | #
+# +------------------------------------------------------+ #
+############################################################
+
+# Kit delay in seconds (-1 = one-time only, 0 = no cooldown, >0 = cooldown in seconds)
 kits:
+  # Starter kit - given automatically to new players (one-time only)
   starter:
-    delay: 0
+    delay: -1  # -1 means one-time only, cannot be claimed again
     items:
-      - 272 1 # Stone sword
-      - 274 1 # Stone pickaxe
-      - 275 1 # Stone axe
-      - 260 16 # Apples
-      - 50 32 # Torches
+      # Tools
+      - iron_sword 1
+      - iron_pickaxe 1
+      - iron_axe 1
+      - iron_shovel 1
+
+      # Food
+      - bread 16
+      - cooked_beef 16
+
+      # Building materials
+      - oak_planks 64
+      - cobblestone 64
+      - torch 64
+
+      # Utility
+      - crafting_table 1
+      - bed 1
+
+  # Additional kits players can claim manually
+  tools:
+    delay: 86400  # 24 hours
+    items:
+      - iron_pickaxe 1
+      - iron_axe 1
+      - torch 32
+
+############################################################
+# +------------------------------------------------------+ #
+# |                   Other Settings                      | #
+# +------------------------------------------------------+ #
+############################################################
 
 # Enable per-world chat
 per-world-chat: false

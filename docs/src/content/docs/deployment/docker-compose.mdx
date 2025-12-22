@@ -1,0 +1,454 @@
+---
+title: Docker Compose
+description: Deploy Lumo Server with Docker Compose for easy management
+---
+
+Use Docker Compose to manage your Lumo server with declarative configuration and easy commands.
+
+## Basic Configuration
+
+Create `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  minecraft:
+    image: ghcr.io/lucasilverentand/lumo-server:latest
+    container_name: minecraft-server
+    restart: unless-stopped
+    environment:
+      EULA: "true"
+      MEMORY: "4G"
+      ENABLE_AUTOPAUSE: "true"
+      BACKUP_ENABLED: "true"
+      OPS: "YourMinecraftUsername"
+      RCON_PASSWORD: "${RCON_PASSWORD:-minecraft}"
+    ports:
+      - "25565:25565"      # Minecraft
+      - "8100:8100"        # BlueMap
+      - "25575:25575"      # RCON
+      - "24454:24454/udp"  # Voice chat
+    volumes:
+      - minecraft_data:/data
+      - minecraft_backups:/backups
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "25565"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+
+volumes:
+  minecraft_data:
+  minecraft_backups:
+```
+
+## Using Environment File
+
+Create `.env` file for secrets:
+
+```env
+RCON_PASSWORD=your-secure-password-here
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+AWS_ACCESS_KEY_ID=your-aws-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret
+```
+
+Reference in `docker-compose.yml`:
+
+```yaml
+services:
+  minecraft:
+    env_file:
+      - .env
+    environment:
+      EULA: "true"
+      # .env values are automatically loaded
+```
+
+:::caution
+Add `.env` to `.gitignore` to avoid committing secrets!
+:::
+
+## Advanced Configuration
+
+### With S3 Backups
+
+```yaml
+version: '3.8'
+
+services:
+  minecraft:
+    image: ghcr.io/lucasilverentand/lumo-server:latest
+    container_name: minecraft-server
+    restart: unless-stopped
+    environment:
+      EULA: "true"
+      MEMORY: "6G"
+      DIFFICULTY: "hard"
+      MAX_PLAYERS: "30"
+      MOTD: "Welcome to Lumo Universe!"
+      
+      # Operators
+      OPS: "Player1,Player2:3,Player3:2"
+      
+      # Autopause
+      ENABLE_AUTOPAUSE: "true"
+      AUTOPAUSE_TIMEOUT: "300"
+      
+      # Backups
+      BACKUP_ENABLED: "true"
+      BACKUP_INTERVAL: "43200"  # Every 12 hours
+      BACKUP_RETENTION_DAYS: "14"
+      BACKUP_RETENTION_WEEKS: "8"
+      
+      # S3 Configuration
+      S3_ENABLED: "true"
+      S3_BUCKET: "${S3_BUCKET}"
+      S3_PREFIX: "minecraft-backups"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION:-us-east-1}"
+      
+      # Discord Notifications
+      DISCORD_WEBHOOK_URL: "${DISCORD_WEBHOOK_URL}"
+      
+      # RCON
+      RCON_PASSWORD: "${RCON_PASSWORD}"
+    ports:
+      - "25565:25565"
+      - "8100:8100"
+      - "25575:25575"
+      - "24454:24454/udp"
+    volumes:
+      - minecraft_data:/data
+      - minecraft_backups:/backups
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 6G
+
+volumes:
+  minecraft_data:
+    driver: local
+  minecraft_backups:
+    driver: local
+```
+
+### With Bind Mounts
+
+Use host directories instead of volumes:
+
+```yaml
+services:
+  minecraft:
+    image: ghcr.io/lucasilverentand/lumo-server:latest
+    volumes:
+      - ./minecraft-data:/data
+      - ./minecraft-backups:/backups
+```
+
+Directory structure:
+
+```
+.
+├── docker-compose.yml
+├── .env
+├── minecraft-data/     (created automatically)
+└── minecraft-backups/  (created automatically)
+```
+
+## Multi-Server Setup
+
+Run multiple Minecraft servers:
+
+```yaml
+version: '3.8'
+
+services:
+  minecraft-survival:
+    image: ghcr.io/lucasilverentand/lumo-server:latest
+    container_name: minecraft-survival
+    restart: unless-stopped
+    environment:
+      EULA: "true"
+      MEMORY: "4G"
+      MOTD: "Lumo Survival Server"
+    ports:
+      - "25565:25565"
+      - "8100:8100"
+    volumes:
+      - survival_data:/data
+      - survival_backups:/backups
+
+  minecraft-creative:
+    image: ghcr.io/lucasilverentand/lumo-server:latest
+    container_name: minecraft-creative
+    restart: unless-stopped
+    environment:
+      EULA: "true"
+      MEMORY: "4G"
+      GAMEMODE: "creative"
+      DIFFICULTY: "peaceful"
+      MOTD: "Lumo Creative Server"
+    ports:
+      - "25566:25565"  # Different external port
+      - "8101:8100"
+    volumes:
+      - creative_data:/data
+      - creative_backups:/backups
+
+volumes:
+  survival_data:
+  survival_backups:
+  creative_data:
+  creative_backups:
+```
+
+## Management Commands
+
+### Start Services
+
+```bash
+docker-compose up -d
+```
+
+### Stop Services
+
+```bash
+docker-compose stop
+```
+
+### Restart Services
+
+```bash
+docker-compose restart
+```
+
+### View Logs
+
+```bash
+# All logs
+docker-compose logs
+
+# Follow logs
+docker-compose logs -f
+
+# Last 100 lines
+docker-compose logs --tail=100
+
+# Specific service
+docker-compose logs -f minecraft
+```
+
+### Update Image
+
+```bash
+docker-compose pull
+docker-compose up -d
+```
+
+### Execute Commands
+
+```bash
+# RCON command
+docker-compose exec minecraft mcrcon -H localhost -P 25575 -p minecraft "list"
+
+# Manual backup
+docker-compose exec minecraft python3 /backup.py
+
+# Shell access
+docker-compose exec minecraft sh
+```
+
+### Remove Everything
+
+```bash
+# Stop and remove containers (data volumes preserved)
+docker-compose down
+
+# Remove containers and volumes (DELETES ALL DATA!)
+docker-compose down -v
+```
+
+## Resource Limits
+
+Limit CPU and memory in compose file:
+
+```yaml
+services:
+  minecraft:
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '2.0'
+          memory: 4G
+```
+
+:::note
+For Docker Compose v2, use `docker compose` (no hyphen) instead of `docker-compose`.
+:::
+
+## Watchtower Integration
+
+Auto-update your server with Watchtower:
+
+```yaml
+version: '3.8'
+
+services:
+  minecraft:
+    image: ghcr.io/lucasilverentand/lumo-server:latest
+    container_name: minecraft-server
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    # ... rest of config ...
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_STOPPED=true
+      - WATCHTOWER_SCHEDULE=0 0 4 * * *  # Check daily at 4 AM
+      - WATCHTOWER_LABEL_ENABLE=true
+```
+
+:::caution
+Auto-updates may cause unexpected downtime. Test updates manually first.
+:::
+
+## Backup Integration
+
+### With Rclone for Cloud Backups
+
+```yaml
+services:
+  minecraft:
+    image: ghcr.io/lucasilverentand/lumo-server:latest
+    environment:
+      RCLONE_ENABLED: "true"
+      RCLONE_DEST: "remote:minecraft-backups"
+    volumes:
+      - minecraft_data:/data
+      - minecraft_backups:/backups
+      - ~/.config/rclone:/root/.config/rclone:ro
+```
+
+### Separate Backup Container
+
+```yaml
+services:
+  minecraft:
+    # ... main config ...
+  
+  backup:
+    image: offen/docker-volume-backup:latest
+    restart: unless-stopped
+    environment:
+      BACKUP_CRON_EXPRESSION: "0 2 * * *"  # 2 AM daily
+      BACKUP_FILENAME: "minecraft-%Y%m%d-%H%M%S.tar.gz"
+      BACKUP_RETENTION_DAYS: "7"
+    volumes:
+      - minecraft_data:/backup/minecraft:ro
+      - ./backups:/archive
+```
+
+## Monitoring
+
+### Add Prometheus Exporter
+
+```yaml
+services:
+  minecraft:
+    # ... main config ...
+  
+  exporter:
+    image: joshi425/minecraft_exporter:latest
+    container_name: minecraft-exporter
+    restart: unless-stopped
+    ports:
+      - "9150:9150"
+    environment:
+      MC_RCON_ADDRESS: "minecraft:25575"
+      MC_RCON_PASSWORD: "${RCON_PASSWORD}"
+    depends_on:
+      - minecraft
+```
+
+Access metrics at `http://localhost:9150/metrics`
+
+## Complete Production Example
+
+```yaml
+version: '3.8'
+
+services:
+  minecraft:
+    image: ghcr.io/lucasilverentand/lumo-server:latest
+    container_name: minecraft-server
+    hostname: minecraft
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      EULA: "true"
+      MEMORY: "6G"
+      ENABLE_AUTOPAUSE: "true"
+      BACKUP_ENABLED: "true"
+    ports:
+      - "25565:25565"
+      - "8100:8100"
+      - "25575:25575"
+      - "24454:24454/udp"
+    volumes:
+      - minecraft_data:/data
+      - minecraft_backups:/backups
+    networks:
+      - minecraft_net
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 6G
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "25565"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  minecraft_net:
+    driver: bridge
+
+volumes:
+  minecraft_data:
+  minecraft_backups:
+```
+
+## Next Steps
+
+- [Environment Variables](/lumo-server/configuration/environment/) - Full configuration reference
+- [Automated Backups](/lumo-server/features/backups/) - Configure backup destinations
+- [Troubleshooting](/lumo-server/reference/troubleshooting/) - Common issues and solutions

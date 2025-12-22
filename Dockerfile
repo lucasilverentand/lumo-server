@@ -141,6 +141,8 @@ COPY --chmod=755 docker/server/entrypoint.sh /entrypoint.sh
 COPY --chmod=755 docker/server/init-worlds.sh /init-worlds.sh
 COPY --chmod=755 docker/server/autopause.sh /autopause.sh
 COPY --chmod=755 docker/server/wake-listener.py /wake-listener.py
+COPY --chmod=755 docker/server/backup.py /backup.py
+COPY --chmod=755 docker/server/restore.sh /restore.sh
 
 # Set ownership
 RUN chown -R minecraft:minecraft /server
@@ -177,7 +179,19 @@ ENV MEMORY=4G \
     ENABLE_AUTOPAUSE=true \
     AUTOPAUSE_TIMEOUT=10 \
     AUTOPAUSE_POLL_INTERVAL=30 \
-    ENABLE_CHUNKER=true
+    ENABLE_CHUNKER=true \
+    BACKUP_ENABLED=true \
+    BACKUP_INTERVAL=86400 \
+    BACKUP_DIR=/backups \
+    BACKUP_RETENTION_DAYS=7 \
+    BACKUP_RETENTION_WEEKS=4 \
+    BACKUP_COMPRESSION=gz \
+    S3_ENABLED=false \
+    S3_BUCKET="" \
+    S3_PREFIX="minecraft-backups" \
+    S3_ENDPOINT="" \
+    RCLONE_ENABLED=false \
+    RCLONE_DEST=""
 
 # Ports
 EXPOSE 25565/tcp
