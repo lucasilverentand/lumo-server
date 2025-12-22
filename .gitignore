@@ -18,3 +18,10 @@ docker-compose.override.yml
 # Build artifacts
 *.log
 docker-compose.yml
+
+# Astro/Starlight documentation
+docs/dist/
+docs/.astro/
+docs/node_modules/
+docs/package-lock.json
+docs/yarn.lock

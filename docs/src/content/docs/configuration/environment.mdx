@@ -1,0 +1,320 @@
+---
+title: Environment Variables
+description: Complete reference for all Lumo Server environment variables
+---
+
+Configure your Lumo server using environment variables. Pass them with `-e` flag in Docker or in `docker-compose.yml`.
+
+## Required Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `EULA` | `false` | **REQUIRED**. Set to `true` to accept the [Minecraft EULA](https://www.minecraft.net/en-us/eula). Server won't start without this. |
+
+## Server Configuration
+
+### Memory and Performance
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MEMORY` | `4G` | JVM heap size. Recommended: `2G` (small), `4G` (medium), `6G` (large), `8G+` (very large) |
+| `MAX_TICK_TIME` | `-1` | Maximum tick time before watchdog kills server. `-1` disables watchdog. |
+| `NETWORK_COMPRESSION_THRESHOLD` | `256` | Network compression threshold in bytes. Higher = less CPU, more bandwidth. |
+
+### Player Limits and Gameplay
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MAX_PLAYERS` | `20` | Maximum number of players allowed on the server |
+| `DIFFICULTY` | `normal` | Game difficulty: `peaceful`, `easy`, `normal`, `hard` |
+| `GAMEMODE` | `survival` | Default gamemode: `survival`, `creative`, `adventure`, `spectator` |
+| `HARDCORE` | `false` | Enable hardcore mode (players banned on death) |
+| `PVP` | `true` | Enable player vs player combat |
+| `PLAYER_IDLE_TIMEOUT` | `0` | Kick idle players after N minutes. `0` = disabled |
+
+### Server Identity
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MOTD` | `Welcome to the Lumo Universe!` | Message of the day shown in server list |
+| `ONLINE_MODE` | `true` | Verify players with Mojang servers. **Keep `true` for security** |
+
+### World Settings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VIEW_DISTANCE` | `12` | Server-side view distance in chunks (3-32). Higher = more RAM usage |
+| `SIMULATION_DISTANCE` | `10` | Distance in chunks where mobs/crops update (3-32) |
+| `SPAWN_PROTECTION` | `0` | Radius around spawn where only ops can build. `0` = disabled |
+| `SPAWN_ANIMALS` | `true` | Spawn passive mobs (cows, pigs, etc.) |
+| `SPAWN_MONSTERS` | `true` | Spawn hostile mobs (zombies, skeletons, etc.) |
+| `SPAWN_NPCS` | `true` | Spawn villagers |
+| `ENTITY_BROADCAST_RANGE` | `100` | Percentage of normal entity tracking distance |
+
+### Permissions
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ALLOW_FLIGHT` | `true` | Allow flight (required for creative mode and some plugins) |
+| `ENABLE_COMMAND_BLOCK` | `true` | Enable command blocks |
+| `WHITELIST` | `false` | Enable whitelist (only whitelisted players can join) |
+| `ENFORCE_WHITELIST` | `false` | Kick non-whitelisted players if whitelist is enabled mid-session |
+
+## Operators and Whitelist
+
+### Operators
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OPS` | `""` | Comma-separated list of operators. Format: `Player1,Player2:3,Player3:2` where `:N` is op level (1-4) |
+
+**Op Levels:**
+- **1**: Can bypass spawn protection
+- **2**: Can use `/clear`, `/difficulty`, `/effect`, `/gamemode`, `/tp`
+- **3**: Can use `/ban`, `/kick`, `/op`
+- **4**: Can use `/stop` (full control)
+
+**Examples:**
+```bash
+-e OPS="Player1"              # Op level 4 (default)
+-e OPS="Player1,Player2"      # Multiple ops, level 4
+-e OPS="Player1:4,Player2:2"  # Different op levels
+```
+
+### Whitelist
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WHITELIST_USERS` | `""` | Comma-separated list of whitelisted players |
+
+**Example:**
+```bash
+-e WHITELIST=true -e WHITELIST_USERS="Player1,Player2,Player3"
+```
+
+## RCON Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_RCON` | `true` | Enable RCON for remote server management |
+| `RCON_PASSWORD` | `minecraft` | RCON password. **Change in production!** |
+| `RCON_PORT` | `25575` | RCON port |
+
+**Security Warning:** Change `RCON_PASSWORD` in production! Default password is widely known.
+
+```bash
+-e RCON_PASSWORD="$(openssl rand -base64 32)"
+```
+
+## Autopause Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_AUTOPAUSE` | `true` | Enable autopause when no players are online |
+| `AUTOPAUSE_TIMEOUT` | `10` | Minutes of idle time before pausing |
+| `AUTOPAUSE_POLL_INTERVAL` | `30` | Seconds between player checks |
+
+**How it works:**
+- Server monitors player count and chunk loading
+- After `AUTOPAUSE_TIMEOUT` minutes of no activity, pauses JVM with SIGSTOP
+- `wake-listener.py` shows "server sleeping" message to connecting players
+- Server automatically resumes when player tries to connect
+
+**When to disable:**
+- Running in Kubernetes (conflicts with health checks)
+- Need guaranteed uptime
+- Running scheduled tasks/plugins
+
+## Backup Configuration
+
+### Basic Backup Settings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BACKUP_ENABLED` | `true` | Enable automated backups |
+| `BACKUP_INTERVAL` | `86400` | Backup interval in seconds (86400 = 24 hours) |
+| `BACKUP_DIR` | `/backups` | Directory to store backups |
+| `BACKUP_COMPRESSION` | `gz` | Compression format: `gz` (fast), `bz2` (smaller), `xz` (smallest) |
+
+### Retention Policy
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BACKUP_RETENTION_DAYS` | `7` | Keep all backups from last N days |
+| `BACKUP_RETENTION_WEEKS` | `4` | After daily retention, keep one backup per week for N weeks |
+
+**Example:** With defaults (7 days + 4 weeks), you'll have ~11 backups at any time.
+
+### S3-Compatible Storage
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `S3_ENABLED` | `false` | Enable S3 uploads |
+| `S3_BUCKET` | `""` | S3 bucket name |
+| `S3_PREFIX` | `minecraft-backups` | S3 object prefix/folder |
+| `S3_ENDPOINT` | `""` | Custom endpoint for MinIO, Backblaze B2, etc. Leave empty for AWS S3 |
+| `AWS_ACCESS_KEY_ID` | - | AWS access key (required if `S3_ENABLED=true`) |
+| `AWS_SECRET_ACCESS_KEY` | - | AWS secret key (required if `S3_ENABLED=true`) |
+| `AWS_DEFAULT_REGION` | - | AWS region (e.g., `us-east-1`) |
+
+**AWS S3 Example:**
+```bash
+-e S3_ENABLED=true \
+-e S3_BUCKET=minecraft-backups \
+-e AWS_ACCESS_KEY_ID=AKIA... \
+-e AWS_SECRET_ACCESS_KEY=... \
+-e AWS_DEFAULT_REGION=us-east-1
+```
+
+**MinIO Example:**
+```bash
+-e S3_ENABLED=true \
+-e S3_BUCKET=minecraft \
+-e S3_ENDPOINT=https://minio.example.com \
+-e AWS_ACCESS_KEY_ID=minioadmin \
+-e AWS_SECRET_ACCESS_KEY=minioadmin
+```
+
+### Rclone Support
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RCLONE_ENABLED` | `false` | Enable rclone for cloud backups |
+| `RCLONE_DEST` | `""` | Rclone destination (e.g., `remote:bucket/folder`) |
+
+**Requires:** Mount rclone config into container
+```bash
+-v ~/.config/rclone:/root/.config/rclone:ro
+```
+
+**Example:**
+```bash
+-e RCLONE_ENABLED=true \
+-e RCLONE_DEST="gdrive:minecraft-backups" \
+-v ~/.config/rclone:/root/.config/rclone:ro
+```
+
+### Discord Notifications
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DISCORD_WEBHOOK_URL` | `""` | Discord webhook URL for backup notifications |
+
+**Setup:**
+1. Server Settings → Integrations → Webhooks → New Webhook
+2. Copy webhook URL
+3. Pass as environment variable
+
+```bash
+-e DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
+```
+
+## Plugin Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENABLE_CHUNKER` | `true` | Enable Chunker plugin for world pre-generation |
+
+More plugin-specific configuration available in plugin config files. See [Plugin Configuration](/lumo-server/configuration/plugins/).
+
+## Complete Examples
+
+### Minimal Setup
+
+```bash
+docker run -e EULA=true -p 25565:25565 ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+### Production Setup
+
+```bash
+docker run -d --name minecraft-server \
+  --restart unless-stopped \
+  -e EULA=true \
+  -e MEMORY=6G \
+  -e MAX_PLAYERS=30 \
+  -e DIFFICULTY=hard \
+  -e MOTD="Welcome to My Server!" \
+  -e OPS="Admin1:4,Moderator1:3" \
+  -e WHITELIST=true \
+  -e WHITELIST_USERS="Admin1,Moderator1,Player1,Player2" \
+  -e RCON_PASSWORD="$(openssl rand -base64 32)" \
+  -e ENABLE_AUTOPAUSE=true \
+  -e BACKUP_ENABLED=true \
+  -e BACKUP_INTERVAL=43200 \
+  -e S3_ENABLED=true \
+  -e S3_BUCKET=my-minecraft-backups \
+  -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+  -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+  -e AWS_DEFAULT_REGION=us-east-1 \
+  -e DISCORD_WEBHOOK_URL="${DISCORD_WEBHOOK_URL}" \
+  -p 25565:25565 \
+  -p 8100:8100 \
+  -p 25575:25575 \
+  -p 24454:24454/udp \
+  -v minecraft_data:/data \
+  -v minecraft_backups:/backups \
+  ghcr.io/lucasilverentand/lumo-server:latest
+```
+
+### Docker Compose
+
+```yaml
+version: '3.8'
+services:
+  minecraft:
+    image: ghcr.io/lucasilverentand/lumo-server:latest
+    environment:
+      # Required
+      EULA: "true"
+      
+      # Performance
+      MEMORY: "6G"
+      
+      # Server Settings
+      MAX_PLAYERS: "30"
+      DIFFICULTY: "hard"
+      MOTD: "Welcome to My Server!"
+      
+      # Permissions
+      OPS: "Admin1:4,Moderator1:3"
+      WHITELIST: "true"
+      WHITELIST_USERS: "Admin1,Moderator1,Player1"
+      
+      # RCON
+      RCON_PASSWORD: "${RCON_PASSWORD}"
+      
+      # Autopause
+      ENABLE_AUTOPAUSE: "true"
+      AUTOPAUSE_TIMEOUT: "15"
+      
+      # Backups
+      BACKUP_ENABLED: "true"
+      BACKUP_INTERVAL: "43200"
+      S3_ENABLED: "true"
+      S3_BUCKET: "${S3_BUCKET}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+      AWS_DEFAULT_REGION: "us-east-1"
+      
+      # Notifications
+      DISCORD_WEBHOOK_URL: "${DISCORD_WEBHOOK_URL}"
+    ports:
+      - "25565:25565"
+      - "8100:8100"
+      - "25575:25575"
+      - "24454:24454/udp"
+    volumes:
+      - minecraft_data:/data
+      - minecraft_backups:/backups
+
+volumes:
+  minecraft_data:
+  minecraft_backups:
+```
+
+## Next Steps
+
+- [Server Properties](/lumo-server/configuration/server-properties/) - Advanced server.properties configuration
+- [Plugin Configuration](/lumo-server/configuration/plugins/) - Configure individual plugins
+- [Automated Backups](/lumo-server/features/backups/) - Detailed backup guide
