@@ -36,6 +36,7 @@ PAUSED=false
 JAVA_PID=""
 SOCAT_PID=""
 LISTENER_PID=""
+RCON_FAIL_COUNT=0
 
 log() {
     echo "[AutoPause] $(date '+%H:%M:%S') $1"
@@ -62,7 +63,8 @@ is_chunker_active() {
     for progress_file in /data/*_pregenerator.txt /data/plugins/Chunker/*.txt; do
         if [ -f "$progress_file" ]; then
             local mtime
-            mtime=$(stat -c %Y "$progress_file" 2>/dev/null || echo "0")
+            # Use date -r for Alpine/BusyBox compatibility (stat -c doesn't work)
+            mtime=$(date -r "$progress_file" +%s 2>/dev/null || echo "0")
             local age=$((now - mtime))
             if [ "$age" -lt "$CHUNKER_ACTIVITY_THRESHOLD" ]; then
                 return 0
@@ -193,10 +195,17 @@ main_loop() {
         player_count=$(get_player_count)
 
         if [ "$player_count" = "-1" ]; then
-            IDLE_SECONDS=0
+            # RCON failed - don't reset idle timer, just skip this check
+            # This prevents RCON flakiness from keeping server awake forever
+            RCON_FAIL_COUNT=$((RCON_FAIL_COUNT + 1))
+            # Only log every 10th failure to avoid spam
+            if [ $((RCON_FAIL_COUNT % 10)) -eq 1 ]; then
+                log "RCON unavailable (count: $RCON_FAIL_COUNT), skipping player check"
+            fi
             sleep "$AUTOPAUSE_POLL_INTERVAL"
             continue
         fi
+        RCON_FAIL_COUNT=0
 
         if [ "$player_count" -gt 0 ]; then
             if [ "$IDLE_SECONDS" -gt 0 ]; then
