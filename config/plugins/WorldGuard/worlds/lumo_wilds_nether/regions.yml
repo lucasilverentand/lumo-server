@@ -1,0 +1,66 @@
+# WorldGuard regions for lumo_wilds_nether
+# Nether dimension - only spawn protection and anti-grief globals
+
+regions:
+  # Global anti-grief protection
+  __global__:
+    members: {}
+    owners: {}
+    flags:
+      # Prevent major griefing
+      block-tnt: deny
+      wither-damage: deny
+
+      # Allow ghast explosions for nether challenge
+      ghast-fireball: allow
+
+      # Prevent other mob griefing
+      mob-griefing: deny
+      enderman-grief: deny
+
+      # Fire spread allowed in nether (natural hazard)
+      fire-spread: allow
+      lava-fire: allow
+
+      # PvP allowed
+      pvp: allow
+
+      # Send message on entry
+      greeting: "&4Nether &7- Extreme danger. Watch for lava and hostile mobs!"
+    type: global
+    priority: 0
+
+  # Nether spawn protection area (portal zone)
+  spawn:
+    min: {x: -50.0, y: 0.0, z: -50.0}
+    max: {x: 50.0, y: 128.0, z: 50.0}
+    members: {}
+    owners:
+      groups:
+        - admin
+        - moderator
+    flags:
+      # Protect spawn portal area
+      build: deny
+      block-break: deny
+      block-place: deny
+
+      # Disable PvP in spawn
+      pvp: deny
+
+      # Prevent explosions in spawn
+      block-tnt: deny
+      ghast-fireball: deny
+      creeper-explosion: deny
+      wither-damage: deny
+      other-explosion: deny
+
+      # Prevent fire in spawn portal
+      fire-spread: deny
+      lava-fire: deny
+
+      # Send spawn message
+      greeting: "&cNether Portal &7- Safe zone. Portal to overworld available."
+      farewell: "&7Leaving portal zone - &4Extreme danger ahead!"
+    type: cuboid
+    priority: 10

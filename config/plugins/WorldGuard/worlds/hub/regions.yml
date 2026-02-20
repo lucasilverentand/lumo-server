@@ -1,0 +1,63 @@
+# WorldGuard regions for hub world
+# Hub is fully protected - adventure mode, peaceful difficulty
+
+regions:
+  # Global protection for entire hub world
+  __global__:
+    members: {}
+    owners: {}
+    flags:
+      # Block all destructive actions
+      build: deny
+      block-break: deny
+      block-place: deny
+
+      # Disable all explosions
+      block-tnt: deny
+      creeper-explosion: deny
+      wither-damage: deny
+      other-explosion: deny
+
+      # Disable griefing
+      mob-griefing: deny
+      enderman-grief: deny
+
+      # Disable PvP
+      pvp: deny
+
+      # Disable fire
+      fire-spread: deny
+      lava-fire: deny
+
+      # Disable mob spawning (peaceful)
+      mob-spawning: deny
+
+      # Prevent players from breaking environment
+      item-frame-rotation: deny
+      use: deny
+
+      # Allow movement items
+      enderpearl: allow
+      chorus-fruit-teleport: allow
+
+      # Send message on entry
+      greeting: "&aWelcome to the Hub! &7Use portals to travel to different worlds."
+    type: global
+    priority: 0
+
+  # Spawn protection area (extra protected)
+  spawn:
+    min: {x: -50.0, y: -64.0, z: -50.0}
+    max: {x: 50.0, y: 320.0, z: 50.0}
+    members: {}
+    owners:
+      groups:
+        - admin
+    flags:
+      # Reinforce spawn protection
+      build: deny
+      pvp: deny
+      mob-spawning: deny
+      greeting: "&6Hub Spawn &7- Portals to all worlds available here"
+    type: cuboid
+    priority: 10
