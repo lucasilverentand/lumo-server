@@ -218,6 +218,12 @@ if [ "${BACKUP_ENABLED}" = "true" ] && [ -f "/backup.py" ]; then
     python3 /backup.py &
 fi
 
+# Server monitor (health check endpoint and Discord webhooks)
+if [ "${ENABLE_MONITOR}" = "true" ] && [ -f "/monitor.py" ]; then
+    log "Starting server monitor (port: ${MONITOR_PORT:-8080})..."
+    python3 /monitor.py &
+fi
+
 # =============================================================================
 # Start Server
 # =============================================================================

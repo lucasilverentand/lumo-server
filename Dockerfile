@@ -118,7 +118,7 @@ RUN addgroup -g 1000 minecraft && \
     adduser -u 1000 -G minecraft -h /data -D minecraft
 
 # Install minimal runtime dependencies
-RUN apk add --no-cache bash tini netcat-openbsd iproute2 procps socat python3
+RUN apk add --no-cache bash tini netcat-openbsd iproute2 procps socat python3 curl
 
 WORKDIR /server
 
@@ -143,6 +143,7 @@ COPY --chmod=755 docker/server/autopause.sh /autopause.sh
 COPY --chmod=755 docker/server/wake-listener.py /wake-listener.py
 COPY --chmod=755 docker/server/backup.py /backup.py
 COPY --chmod=755 docker/server/restore.sh /restore.sh
+COPY --chmod=755 docker/server/monitor.py /monitor.py
 
 # Set ownership
 RUN chown -R minecraft:minecraft /server
@@ -191,17 +192,23 @@ ENV MEMORY=4G \
     S3_PREFIX="minecraft-backups" \
     S3_ENDPOINT="" \
     RCLONE_ENABLED=false \
-    RCLONE_DEST=""
+    RCLONE_DEST="" \
+    ENABLE_MONITOR=true \
+    MONITOR_PORT=8080 \
+    MONITOR_CHECK_INTERVAL=60 \
+    TPS_WARNING_THRESHOLD=15.0 \
+    DISCORD_WEBHOOK_URL=""
 
 # Ports
 EXPOSE 25565/tcp
 EXPOSE 25575/tcp
 EXPOSE 8100/tcp
 EXPOSE 24454/udp
+EXPOSE 8080/tcp
 
-# Health check - verify server port is accepting connections
+# Health check - use monitor endpoint if available, fallback to port check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=300s --retries=3 \
-    CMD nc -z localhost 25565 || exit 1
+    CMD curl -f http://localhost:8080/health || nc -z localhost 25565 || exit 1
 
 USER minecraft
 VOLUME /data
