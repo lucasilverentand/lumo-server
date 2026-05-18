@@ -13,7 +13,7 @@ export default defineConfig({
 			title: 'Lumo Server',
 			description: 'Docker-based Minecraft Paper server with 20+ plugins and autopause',
 			social: [
-				{ icon: 'github', label: 'GitHub', href: 'https://github.com/lucasilverentand/lumo-server' },
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/lumo-minecraft/lumo-server' },
 			],
 			sidebar: [
 				{

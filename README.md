@@ -1,3 +1,7 @@
+<p align="center">
+  <img src=".github/assets/lumo-logo.png" alt="Lumo logo" width="128">
+</p>
+
 # Lumo Server
 
 Production-ready Minecraft Paper server with 20+ plugins, autopause, and automated backups.
